@@ -1,15 +1,22 @@
 #include "layout.hpp"
-#include <iostream>
 
 using namespace LAYOUT;
 
 
-/* CLASS element */
+/* CLASS baseElement */
 
 
-element::element(float contentPosX, float contentPosY, float contentWidth,
-	float contentHeight, float slotPosX, float slotPosY, float slotWidth,
-	float slotHeight, int alignmentX, int alignmentY, int depth, bool visible)
+int baseElement::idGenerator = 0;
+
+
+baseElement::baseElement(std::string name, float contentPosX, float contentPosY,
+	float contentWidth, float contentHeight, float slotPosX, float slotPosY,
+	float slotWidth, float slotHeight, int alignmentX, int alignmentY,
+	int depth, bool visible, bool contentVisible,
+	void (*onContentClick)(std::map<std::string, std::string>&),
+	void (*onSlotClick)(std::map<std::string, std::string>&),
+	void (*onContentHover)(std::map<std::string, std::string>&),
+	void (*onSlotHover)(std::map<std::string, std::string>&))
 {
 	if (contentWidth < 0)
 		contentWidth = 0;
@@ -26,6 +33,10 @@ element::element(float contentPosX, float contentPosY, float contentWidth,
 		alignmentY != ALIGNMENT::bottom && alignmentY != ALIGNMENT::center)
 		alignmentY = ALIGNMENT::none;
 
+	id = idGenerator ++;
+	this->name = name;
+	parentLayout = 0;
+	slotNumber = -1;
 	this->contentPosX = contentPosX;
 	this->contentPosY = contentPosY;
 	this->contentWidth = contentWidth;
@@ -38,95 +49,136 @@ element::element(float contentPosX, float contentPosY, float contentWidth,
 	this->alignmentY = alignmentY;
 	this->depth = depth;
 	this->visible = visible;
+	this->contentVisible = contentVisible;
+	this->onContentClick = onContentClick;
+	this->onSlotClick = onSlotClick;
+	this->onContentHover = onContentHover;
+	this->onSlotHover = onSlotHover;
 	align();
 }
 
 
-element::~element()
+baseElement::~baseElement()
 {
 }
 
 
-float element::get_content_position_x()
+int baseElement::get_id()
+{
+	return id;
+}
+
+
+std::string baseElement::get_name()
+{
+	return name;
+}
+
+
+baseFreeLayout* baseElement::get_parent_layout()
+{
+	return parentLayout;
+}
+
+
+int baseElement::get_slot_number()
+{
+	return slotNumber;
+}
+
+
+float baseElement::get_content_position_x()
 {
 	return contentPosX;
 }
 
 
-float element::get_content_position_y()
+float baseElement::get_content_position_y()
 {
 	return contentPosY;
 }
 
 
-float element::get_content_width()
+float baseElement::get_content_width()
 {
 	return contentWidth;
 }
 
 
-float element::get_content_height()
+float baseElement::get_content_height()
 {
 	return contentHeight;
 }
 
 
-float element::get_slot_position_x()
+float baseElement::get_slot_position_x()
 {
 	return contentPosX;
 }
 
 
-float element::get_slot_position_y()
+float baseElement::get_slot_position_y()
 {
 	return contentPosY;
 }
 
 
-float element::get_slot_width()
+float baseElement::get_slot_width()
 {
 	return contentWidth;
 }
 
 
-float element::get_slot_height()
+float baseElement::get_slot_height()
 {
 	return contentHeight;
 }
 
 
-int element::get_alignment_x()
+int baseElement::get_alignment_x()
 {
 	return alignmentX;
 }
 
 
-int element::get_alignment_y()
+int baseElement::get_alignment_y()
 {
 	return alignmentY;
 }
 
 
-int element::get_depth()
+int baseElement::get_depth()
 {
 	return depth;
 }
 
 
-bool element::get_visibility()
+bool baseElement::get_visibility()
 {
 	return visible;
 }
 
 
-void element::set_content_position(float contentPosX, float contentPosY)
+bool baseElement::get_content_visibility()
+{
+	return contentVisible;
+}
+
+
+void baseElement::set_name(std::string name)
+{
+	this->name = name;
+}
+
+
+void baseElement::set_content_position(float contentPosX, float contentPosY)
 {
 	this->contentPosX = contentPosX;
 	this->contentPosY = contentPosY;
 }
 
 
-void element::set_content_size(float contentWidth, float contentHeight)
+void baseElement::set_content_size(float contentWidth, float contentHeight)
 {
 	if (contentWidth >= 0)
 		this->contentWidth = contentWidth;
@@ -136,7 +188,7 @@ void element::set_content_size(float contentWidth, float contentHeight)
 }
 
 
-void element::set_slot_position(float slotPosX, float slotPosY)
+void baseElement::set_slot_position(float slotPosX, float slotPosY)
 {
 	this->slotPosX = slotPosX;
 	this->slotPosY = slotPosY;
@@ -144,7 +196,7 @@ void element::set_slot_position(float slotPosX, float slotPosY)
 }
 
 
-void element::set_slot_size(float slotWidth, float slotHeight)
+void baseElement::set_slot_size(float slotWidth, float slotHeight)
 {
 	if (slotWidth >= 0)
 		this->slotWidth = slotWidth;
@@ -154,21 +206,49 @@ void element::set_slot_size(float slotWidth, float slotHeight)
 }
 
 
-void element::match_content_to_slot()
+void baseElement::match_content_to_slot()
 {
 	set_content_position(slotPosX, slotPosY);
 	set_content_size(slotWidth, slotHeight);
 }
 
 
-void element::match_slot_to_content()
+void baseElement::r_match_content_to_slot()
+{
+	match_content_to_slot();
+}
+
+
+void baseElement::match_slot_to_content()
 {
 	set_slot_position(contentPosX, contentPosY);
 	set_slot_size(contentWidth, contentHeight);
 }
 
 
-void element::set_alignment(int alignmentX, int alignmentY)
+void baseElement::r_match_slot_to_content()
+{
+	match_slot_to_content();
+}
+
+
+void baseElement::set_alignment_x(int alignmentX)
+{
+	if (alignmentX == ALIGNMENT::none || alignmentX == ALIGNMENT::left ||
+		alignmentX == ALIGNMENT::right || alignmentX == ALIGNMENT::center)
+		this->alignmentX = alignmentX;
+}
+
+
+void baseElement::set_alignment_y(int alignmentY)
+{
+	if (alignmentY == ALIGNMENT::none || alignmentY == ALIGNMENT::top ||
+		alignmentY == ALIGNMENT::bottom || alignmentY == ALIGNMENT::center)
+		this->alignmentY = alignmentY;
+}
+
+
+void baseElement::set_alignment(int alignmentX, int alignmentY)
 {
 	if (alignmentX == ALIGNMENT::none || alignmentX == ALIGNMENT::left ||
 		alignmentX == ALIGNMENT::right || alignmentX == ALIGNMENT::center)
@@ -179,7 +259,7 @@ void element::set_alignment(int alignmentX, int alignmentY)
 }
 
 
-void element::align()
+void baseElement::align()
 {
 	float newContentPosX = contentPosX;
 	float newContentPosY = contentPosY;
@@ -202,272 +282,422 @@ void element::align()
 }
 
 
-void element::align(int alignmentX, int alignmentY)
+void baseElement::r_align()
+{
+	align();
+}
+
+
+void baseElement::align(int alignmentX, int alignmentY)
 {
 	set_alignment(alignmentX, alignmentY);
 	align();
 }
 
 
-void element::set_depth(int depth)
+void baseElement::r_align(int alignmentX, int alignmentY)
+{
+	align(alignmentX, alignmentY);
+}
+
+
+void baseElement::set_depth(int depth)
 {
 	this->depth = depth;
 }
 
 
-void element::set_visibility(bool visible)
+void baseElement::set_visibility(bool visible)
 {
 	this->visible = visible;
 }
 
 
-element* element::copy()
+void baseElement::set_content_visibility(bool contentVisible)
 {
-	element* newElement = new element();
-	copy(newElement);
-	return newElement;
+	this->contentVisible = contentVisible;
 }
 
 
-element* element::copy_in_cascade()
+void baseElement::copy(baseElement &element)
 {
-	element* newElement = new element();
-	copy_in_cascade(newElement);
-	return newElement;
+	element.name = name;
+	element.contentPosX = contentPosX;
+	element.contentPosY = contentPosY;
+	element.contentWidth = contentWidth;
+	element.contentHeight = contentHeight;
+	element.slotPosX = slotPosX;
+	element.slotPosY = slotPosY;
+	element.slotWidth = slotWidth;
+	element.slotHeight = slotHeight;
+	element.alignmentX = alignmentX;
+	element.alignmentY = alignmentY;
+	element.depth = depth;
+	element.visible = visible;
+	element.contentVisible = contentVisible;
+	element.onContentClick = onContentClick;
+	element.onSlotClick = onSlotClick;
+	element.onContentHover = onContentHover;
+	element.onSlotHover = onSlotHover;
 }
 
 
-void element::copy(element* newElement)
+void baseElement::r_copy(baseElement &element)
 {
-	if (newElement)
-	{
-		newElement->contentPosX = contentPosX;
-		newElement->contentPosY = contentPosY;
-		newElement->contentWidth = contentWidth;
-		newElement->contentHeight = contentHeight;
-		newElement->slotPosX = slotPosX;
-		newElement->slotPosY = slotPosY;
-		newElement->slotWidth = slotWidth;
-		newElement->slotHeight = slotHeight;
-		newElement->alignmentX = alignmentX;
-		newElement->alignmentY = alignmentY;
-		newElement->depth = depth;
-		newElement->visible = visible;
-	}
+	baseElement::copy(element);
 }
 
 
-void element::copy_in_cascade(element* newElement)
-{
-	element::copy(newElement);
-}
-
-
-void element::delete_in_cascade()
+void baseElement::r_delete()
 {
 	delete this;
 }
 
 
-void element::draw()
+void baseElement::draw()
 {
-	std::cout << "CONTENT POSITION: X: " << contentPosX << ", Y: " << contentPosY << "." << std::endl;
-	std::cout << "CONTENT SIZE: WIDTH: " << contentWidth << ", HEIGHT: " << contentHeight << "." << std::endl;
-	std::cout << "SLOT POSITION: X: " << slotPosX << ", Y: " << slotPosY << "." << std::endl;
-	std::cout << "SLOT SIZE: WIDTH: " << slotWidth << ", HEIGHT: " << slotHeight << "." << std::endl;
-	std::cout << "ALIGNMENT: X: " << alignmentX << ", Y: " << alignmentY << "." << std::endl;
-	std::cout << "DEPTH: " << depth << "." << std::endl;
+	if (contentVisible)
+		drawContent();
 }
 
 
-/* CLASS freeLayout */
+/* CLASS elementHandler */
 
 
-void freeLayout::resizeArrays(int newArraySize)
+elementHandler::elementHandler()
 {
-	if (newArraySize > 0){
-		element** newElementsArray = new element* [newArraySize];
-		for (int i = 0 ; i < arraySize ; i ++)
-			newElementsArray[i] = elementsArray[i];
-		for (int i = arraySize ; i < newArraySize ; i ++)
-			newElementsArray[i] = 0;
-		delete [] elementsArray;
-		elementsArray = newElementsArray;
-		arraySize = newArraySize;
+}
+
+
+elementHandler::elementHandler(elementHandler &handler)
+{
+	idMap = handler.idMap;
+}
+
+
+elementHandler::~elementHandler()
+{
+}
+
+
+std::map<int, baseElement*> elementHandler::get_map()
+{
+	return idMap;
+}
+
+
+void elementHandler::copy(elementHandler &handler)
+{
+	handler.idMap = idMap;
+}
+
+
+baseElement* elementHandler::find_element(int elementId)
+{
+	baseElement *e = 0;
+	std::map<int, baseElement*>::iterator it = idMap.find(elementId);
+	if (it != idMap.end())
+		e = it->second;
+	return e;
+}
+
+
+baseElement* elementHandler::find_element(std::string elementName)
+{
+	for (std::map<int, baseElement*>::iterator it = idMap.begin() ;
+		it != idMap.end() ; it ++)
+	{
+		if (it->second->get_name() == elementName)
+			return it->second;
+	}
+	return 0;
+}
+
+
+void elementHandler::add_element(baseElement &element)
+{
+	idMap.insert(std::pair<int, baseElement*>(element.get_id(), &element));
+}
+
+
+void elementHandler::r_add_element(baseElement &element)
+{
+	idMap.insert(std::pair<int, baseElement*>(element.get_id(), &element));
+	if (baseFreeLayout *layout = dynamic_cast<baseFreeLayout*>(&element))
+	{
+		std::vector<baseElement*> elements = layout->get_elements();
+		for (int i = 0 ; i < elements.size() ; i ++)
+			if (elements[i])
+				r_add_element(*elements[i]);
 	}
 }
 
 
-void freeLayout::recalculateSlot(int slot, element *element)
+void elementHandler::remove_element(baseElement &element)
+{
+	idMap.erase(element.get_id());
+}
+
+
+void elementHandler::r_remove_element(baseElement &element)
+{
+	idMap.erase(element.get_id());
+	if (baseFreeLayout *layout = dynamic_cast<baseFreeLayout*>(&element))
+	{
+		std::vector<baseElement*> elements = layout->get_elements();
+		for (int i = 0 ; i < elements.size() ; i ++)
+			if (elements[i])
+				r_remove_element(*elements[i]);
+	}
+}
+
+
+void elementHandler::click(float cursorPosX, float cursorPosY)
+{
+
+	for (std::map<int, baseElement*>::iterator it = idMap.begin() ;
+		it != idMap.end() ; it ++)
+	{
+		baseElement* elem = it->second;
+		if (cursorPosX >= elem->get_slot_position_x() &&
+			cursorPosY >= elem->get_slot_position_y() &&
+			cursorPosX <= elem->get_slot_position_x() + elem->get_slot_width()
+			&& cursorPosY <= elem->get_slot_position_y() +
+			elem->get_slot_height() && elem->onSlotClick)
+		{
+			// Mouse cursor is within the slot bounds.
+			elem->onSlotClickArgs["cursorPosX"] = std::to_string(cursorPosX);
+			elem->onSlotClickArgs["cursorPosY"] = std::to_string(cursorPosY);
+			elem->onSlotClick(elem->onSlotClickArgs);
+		}
+		if (cursorPosX >= elem->get_content_position_x() &&
+			cursorPosY >= elem->get_content_position_y() &&
+			cursorPosX <= elem->get_content_position_x() +
+			elem->get_content_width() && cursorPosY <=
+			elem->get_content_position_y() + elem->get_content_height()
+			&& elem->onContentClick)
+		{
+			// Mouse cursor is within the content bounds.
+			elem->onContentClickArgs["cursorPosX"] = std::to_string(cursorPosX);
+			elem->onContentClickArgs["cursorPosY"] = std::to_string(cursorPosY);
+			elem->onContentClick(elem->onContentClickArgs);
+		}
+	}
+}
+
+
+void elementHandler::hover(float cursorPosX, float cursorPosY)
+{
+	for (std::map<int, baseElement*>::iterator it = idMap.begin() ;
+		it != idMap.end() ; it ++)
+	{
+		baseElement* elem = it->second;
+		if (cursorPosX >= elem->get_slot_position_x() &&
+			cursorPosY >= elem->get_slot_position_y() &&
+			cursorPosX <= elem->get_slot_position_x() + elem->get_slot_width()
+			&& cursorPosY <= elem->get_slot_position_y() +
+			elem->get_slot_height() && elem->onSlotHover)
+		{
+			// Mouse cursor is within the slot bounds.
+			elem->onSlotHoverArgs["cursorPosX"] = std::to_string(cursorPosX);
+			elem->onSlotHoverArgs["cursorPosY"] = std::to_string(cursorPosY);
+			elem->onSlotHover(elem->onSlotHoverArgs);
+		}
+		if (cursorPosX >= elem->get_content_position_x() &&
+			cursorPosY >= elem->get_content_position_y() &&
+			cursorPosX <= elem->get_content_position_x() +
+			elem->get_content_width() && cursorPosY <=
+			elem->get_content_position_y() + elem->get_content_height()
+			&& elem->onContentHover)
+		{
+			// Mouse cursor is within the content bounds.
+			elem->onContentHoverArgs["cursorPosX"] = std::to_string(cursorPosX);
+			elem->onContentHoverArgs["cursorPosY"] = std::to_string(cursorPosY);
+			elem->onContentHover(elem->onContentHoverArgs);
+		}
+	}
+}
+
+
+/* CLASS baseFreeLayout */
+
+
+void baseFreeLayout::drawContent()
+{
+	// First the interval of depths is calculated.
+	int minDepth = std::numeric_limits<int>::max();
+	int maxDepth = std::numeric_limits<int>::min();
+	for (int i = 0 ; i < elements.size() ; i ++)
+		if (elements[i] && elements[i]->get_visibility())
+		{
+			if (elements[i]->get_depth() < minDepth)
+				minDepth = elements[i]->get_depth();
+			if (elements[i]->get_depth() > maxDepth)
+				maxDepth = elements[i]->get_depth();
+		}
+
+	// Elements are drawn in iterations, from greater to lesser depth.
+	for (int i = maxDepth ; i >= minDepth ; i --)
+		for (int j = 0 ; j < elements.size() ; j ++)
+			if (elements[j] && elements[j]->get_depth() == i &&
+				elements[j]->get_visibility())
+					elements[j]->draw();
+}
+
+
+void baseFreeLayout::recalculateSlotBounds(baseElement &element)
 {
 }
 
 
-void freeLayout::recalculateSlots()
+void baseFreeLayout::recalculateAllSlotBounds()
 {
-	for (int i = 0 ; i < numberOfSlots && i < arraySize ; i ++)
-		if (elementsArray[i])
-			recalculateSlot(i, elementsArray[i]);
+	for (int i = 0 ; i < elements.size() ; i ++)
+		if (elements[i])
+			recalculateSlotBounds(*elements[i]);
 }
 
 
-freeLayout::freeLayout(float contentPosX, float contentPosY, float contentWidth,
-	float contentHeight, float slotPosX, float slotPosY, float slotWidth,
-	float slotHeight, int alignmentX, int alignmentY, int depth, bool visible,
-	int defaultAlignmentX, int defaultAlignmentY, bool defaultDisplay,
-	int numberOfSlots)
-	: element(contentPosX, contentPosY, contentWidth, contentHeight, slotPosX,
-	slotPosY, slotWidth, slotHeight, alignmentX, alignmentY, depth, visible)
+baseFreeLayout::baseFreeLayout(int size, int defaultAlignmentX,
+	int defaultAlignmentY, bool elastic)
 {
+	if (size < 0)
+		size = 0;
+	elements.resize(size);
 	this->defaultAlignmentX = defaultAlignmentX;
 	this->defaultAlignmentY = defaultAlignmentY;
-	this->defaultDisplay = defaultDisplay;
-	if (defaultDisplay || numberOfSlots < 0)
-		this->numberOfSlots = 0;
-	else
-		this->numberOfSlots = numberOfSlots;
-	elementCount = 0;
-	arraySize = 1;
+	this->elastic = elastic;
 	lowestEmptySlot = 0;
 	highestFullSlot = -1;
-	elementsArray = new element* [arraySize];
-	for (int i = 0 ; i < arraySize ; i ++)
-		elementsArray[i] = 0;
 }
 
 
-freeLayout::~freeLayout()
+baseFreeLayout::~baseFreeLayout()
 {
-	delete [] elementsArray;
 }
 
 
-int freeLayout::get_number_of_slots()
+int baseFreeLayout::get_size()
 {
-	return numberOfSlots;
+	return elements.size();
 }
 
 
-int freeLayout::get_element_count()
+int baseFreeLayout::get_element_count()
 {
 	return elementCount;
 }
 
 
-int freeLayout::get_lowest_empty_slot()
+int baseFreeLayout::get_lowest_empty_slot()
 {
 	return lowestEmptySlot;
 }
 
 
-int freeLayout::get_highest_full_slot()
+int baseFreeLayout::get_highest_full_slot()
 {
 	return highestFullSlot;
 }
 
 
-int freeLayout::get_default_alignment_x()
+int baseFreeLayout::get_default_alignment_x()
 {
 	return defaultAlignmentX;
 }
 
 
-int freeLayout::get_default_alignment_y()
+int baseFreeLayout::get_default_alignment_y()
 {
 	return defaultAlignmentY;
 }
 
 
-bool freeLayout::get_default_display()
+bool baseFreeLayout::get_elasticity()
 {
-	return defaultDisplay;
+	return elastic;
 }
 
 
-bool freeLayout::is_slot_full(int slot)
+bool baseFreeLayout::is_slot_full(int slotNumber)
 {
 	bool b = false;
-	if (slot >= 0 && slot < arraySize)
-		b = (elementsArray[slot] != 0);
+	if (slotNumber >= 0 && slotNumber < elements.size())
+		b = (elements[slotNumber] != 0);
 	return b;
 }
 
 
-element* freeLayout::get_element(int slot)
+baseElement* baseFreeLayout::get_element(int slotNumber)
 {
-	element* e = 0;
-	if (slot >= 0 && slot < arraySize)
-		e = elementsArray[slot];
+	baseElement* e = 0;
+	if (slotNumber >= 0 && slotNumber < elements.size())
+		e = elements[slotNumber];
 	return e;
 }
 
 
-void freeLayout::draw()
+std::vector<baseElement*> baseFreeLayout::get_elements()
 {
-	element::draw();
-	std::cout << "DEFAULT ALIGNMENT: X: " << defaultAlignmentX << ", Y: "
-		<< defaultAlignmentY << "." << std::endl;
-	std::cout << "DEFAULT DISPLAY: " << defaultDisplay << ". NUMBER OF SLOTS: "
-		<< numberOfSlots << "." << std::endl;
-	std::cout << "ELEMENT COUNT: " << elementCount << std::endl;
-	std::cout << "LOWEST_FREE_SLOT: " << lowestEmptySlot <<
-		". HIGHEST FULL SLOT: " << highestFullSlot << "." << std::endl;
-
-	std::cout << "{" << std::endl << std::endl;
-
-	// First the interval of depths is calculated.
-	int minDepth = std::numeric_limits<int>::max();
-	int maxDepth = std::numeric_limits<int>::min();
-	for (int i = 0 ; i < numberOfSlots && i < arraySize ; i ++)
-		if (elementsArray[i] && elementsArray[i]->get_visibility())
-		{
-			if (elementsArray[i]->get_depth() < minDepth)
-				minDepth = elementsArray[i]->get_depth();
-			if (elementsArray[i]->get_depth() > maxDepth)
-				maxDepth = elementsArray[i]->get_depth();
-		}
-
-	// Elements are drawn in iterations, from greater to lesser depth.
-	for (int i = maxDepth ; i >= minDepth ; i --)
-		for (int j = 0 ; j < numberOfSlots && j < arraySize ; j ++)
-			if (elementsArray[j] && elementsArray[j]->get_depth() == i &&
-				elementsArray[j]->get_visibility())
-				{
-					elementsArray[j]->draw();
-					std::cout << std::endl;
-				}
-
-	std::cout << "}" << std::endl;
+	return elements;
 }
 
 
-element* freeLayout::extract_element(int slot)
+void baseFreeLayout::set_content_position(float contentPosX, float contentPosY)
 {
-	element* e = 0;
-	if (slot >=0 && slot < arraySize && elementsArray[slot])
-	{
-		e = elementsArray[slot];
-		remove_element(slot);
-	}
-	return e;
+	baseElement::set_content_position(contentPosX, contentPosY);
+	recalculateAllSlotBounds();
 }
 
 
-void freeLayout::set_content_position(float contentPosX, float contentPosY)
+void baseFreeLayout::set_content_size(float contentWidth, float contentHeight)
 {
-	element::set_content_position(contentPosX, contentPosY);
-	recalculateSlots();
+	baseElement::set_content_size(contentWidth, contentHeight);
+	recalculateAllSlotBounds();
 }
 
 
-void freeLayout::set_content_size(float contentWidth, float contentHeight)
+void baseFreeLayout::r_match_content_to_slot()
 {
-	element::set_content_size(contentWidth, contentHeight);
-	recalculateSlots();
+	match_content_to_slot();
+	for (int i = 0 ; i < elements.size() ; i ++)
+		if (elements[i])
+			elements[i]->r_match_content_to_slot();
 }
 
 
-void freeLayout::set_default_alignment(int defaultAlignmentX,
+void baseFreeLayout::r_match_slot_to_content()
+{
+	match_slot_to_content();
+	for (int i = 0 ; i < elements.size() ; i ++)
+		if (elements[i])
+			elements[i]->r_match_slot_to_content();
+}
+
+
+void baseFreeLayout::set_default_alignment_x(int defaultAlignmentX)
+{
+	if (defaultAlignmentX == ALIGNMENT::none ||
+		defaultAlignmentX == ALIGNMENT::left ||
+		defaultAlignmentX == ALIGNMENT::right ||
+		defaultAlignmentX == ALIGNMENT::center ||
+		defaultAlignmentX == ALIGNMENT::keep)
+		this->defaultAlignmentX = defaultAlignmentX;
+}
+
+
+void baseFreeLayout::set_default_alignment_y(int defaultAlignmentY)
+{
+	if (defaultAlignmentY == ALIGNMENT::none ||
+		defaultAlignmentY == ALIGNMENT::top ||
+		defaultAlignmentY == ALIGNMENT::bottom ||
+		defaultAlignmentY == ALIGNMENT::center ||
+		defaultAlignmentY == ALIGNMENT::keep)
+		this->defaultAlignmentY = defaultAlignmentY;
+}
+
+
+void baseFreeLayout::set_default_alignment(int defaultAlignmentX,
 	int defaultAlignmentY)
 {
 	if (defaultAlignmentX == ALIGNMENT::none ||
@@ -485,422 +715,364 @@ void freeLayout::set_default_alignment(int defaultAlignmentX,
 }
 
 
-void freeLayout::align_all_elements()
+void baseFreeLayout::r_align()
 {
-	for (int i = 0 ; i < arraySize ; i ++)
-		if (elementsArray[i])
-			elementsArray[i]->align();
+	align();
+	for (int i = 0 ; i < elements.size() ; i ++)
+		if (elements[i])
+			elements[i]->r_align();
 }
 
 
-void freeLayout::align_all_elements(int alignmentX, int alignmentY)
+void baseFreeLayout::r_align(int alignmentX, int alignmentY)
 {
-	for (int i = 0 ; i < arraySize ; i ++)
-		if (elementsArray[i])
-			elementsArray[i]->align(alignmentX, alignmentY);
+	align(alignmentX, alignmentY);
+	for (int i = 0 ; i < elements.size() ; i ++)
+		if (elements[i])
+			elements[i]->r_align(alignmentX, alignmentY);
 }
 
 
-freeLayout* freeLayout::copy()
+void baseFreeLayout::copy(baseFreeLayout &layout)
 {
-	freeLayout* newLayout = new freeLayout();
-	copy(newLayout);
-	return newLayout;
+	baseElement::copy(layout);
+	layout.defaultAlignmentX = defaultAlignmentX;
+	layout.defaultAlignmentY = defaultAlignmentY;
+	layout.elastic = elastic;
+	layout.recalculateAllSlotBounds();
 }
 
 
-freeLayout* freeLayout::copy_in_cascade()
+void baseFreeLayout::r_copy(baseFreeLayout &layout)
 {
-	freeLayout* newLayout = new freeLayout();
-	copy_in_cascade(newLayout);
-	return newLayout;
+	baseFreeLayout::copy(layout);
+	layout.elements.resize(elements.size(), 0);
+	for (int i = 0 ; i < elements.size() ; i ++)
+		if (elements[i])
+		{
+			layout.elements[i] = elements[i]->r_clone();
+			layout.elements[i]->parentLayout = &layout;
+			layout.elements[i]->slotNumber = i;
+		}
+	layout.elementCount = elementCount;
+	layout.highestFullSlot = highestFullSlot;
+	layout.lowestEmptySlot = lowestEmptySlot;
 }
 
 
-void freeLayout::copy(freeLayout* newLayout)
+void baseFreeLayout::set_size(int size)
 {
-	if (newLayout)
+	if (size >= 0)
 	{
-		element::copy(dynamic_cast<element*>(newLayout));
-		newLayout->freeLayout::resizeArrays(arraySize);
-		for (int i = 0 ; i < arraySize ; i ++)
-			newLayout->elementsArray[i] = elementsArray[i];
-		newLayout->numberOfSlots = numberOfSlots;
-		newLayout->elementCount = elementCount;
-		newLayout->highestFullSlot = highestFullSlot;
-		newLayout->lowestEmptySlot = lowestEmptySlot;
-		newLayout->defaultAlignmentX = defaultAlignmentX;
-		newLayout->defaultAlignmentY = defaultAlignmentY;
-		newLayout->defaultDisplay = defaultDisplay;
+		elements.resize(size, 0);
+		recalculateAllSlotBounds();
+		if (highestFullSlot >= size)
+			for (highestFullSlot = size - 1 ; highestFullSlot >= 0 &&
+				!elements[highestFullSlot] ; highestFullSlot --);
 	}
 }
 
 
-void freeLayout::copy_in_cascade(freeLayout* newLayout)
+void baseFreeLayout::set_elasticity(bool elastic)
 {
-	if (newLayout)
-	{
-		element::copy_in_cascade(dynamic_cast<element*>(newLayout));
-		newLayout->freeLayout::resizeArrays(arraySize);
-		for (int i = 0 ; i < arraySize ; i ++)
-			if (elementsArray[i])
-			{
-				element* elementCopy = elementsArray[i]->copy_in_cascade();
-				newLayout->elementsArray[i] = elementCopy;
-			}
-		newLayout->numberOfSlots = numberOfSlots;
-		newLayout->elementCount = elementCount;
-		newLayout->highestFullSlot = highestFullSlot;
-		newLayout->lowestEmptySlot = lowestEmptySlot;
-		newLayout->defaultAlignmentX = defaultAlignmentX;
-		newLayout->defaultAlignmentY = defaultAlignmentY;
-		newLayout->defaultDisplay = defaultDisplay;
-	}
+	this->elastic = elastic;
 }
 
 
-void freeLayout::set_number_of_slots(int numberOfSlots)
+baseElement* baseFreeLayout::find_element(int elementId)
 {
-	if (!defaultDisplay)
-	{
-		if (numberOfSlots >= 0)
-			this->numberOfSlots = numberOfSlots;
-		else
-			this->numberOfSlots = 0;
-		recalculateSlots();
-	}
+	baseElement *e = 0;
+	for (int i = 0 ; i < elements.size() && !e ; i ++)
+		if (elements[i])
+			if (elements[i]->get_id() == elementId)
+				e = elements[i];
+			else if (baseFreeLayout *layout = dynamic_cast<baseFreeLayout*>(
+				elements[i]))
+				e = layout->find_element(elementId);
+	return e;
 }
 
 
-void freeLayout::set_default_display(bool defaultDisplay)
+baseElement* baseFreeLayout::find_element(std::string elementName)
 {
-	if (defaultDisplay && !this->defaultDisplay)
-	{
-		numberOfSlots = highestFullSlot + 1;
-		recalculateSlots();
-	}
-	this->defaultDisplay = defaultDisplay;
+	baseElement *e = 0;
+	for (int i = 0 ; i < elements.size() && !e ; i ++)
+		if (elements[i])
+			if (elements[i]->get_name() == elementName)
+				e = elements[i];
+			else if (baseFreeLayout *layout = dynamic_cast<baseFreeLayout*>(
+				elements[i]))
+				e = layout->find_element(elementName);
+	return e;
 }
 
 
-void freeLayout::add_element(element* newElement)
+void baseFreeLayout::add_element(baseElement &element)
 {
-	add_element(newElement, lowestEmptySlot);
+	add_element(element, lowestEmptySlot);
 }
 
 
-void freeLayout::add_element(element* newElement, int slot)
+void baseFreeLayout::add_element(baseElement &element, int slotNumber)
 {
-	if (slot >= arraySize)
+	if (slotNumber >= 0 && !element.parentLayout &&
+		(elastic || slotNumber < elements.size()))
 	{
-		int newArraySize;
-		for (newArraySize = arraySize ; newArraySize <= slot ;
-			newArraySize *= 2);
-		resizeArrays(newArraySize);
-	}
-	if (slot >= 0 && newElement)
-	{
-		if (defaultAlignmentX != ALIGNMENT::keep)
-			newElement->set_alignment(defaultAlignmentX, ALIGNMENT::keep);
-		if (defaultAlignmentY != ALIGNMENT::keep)
-			newElement->set_alignment(ALIGNMENT::keep, defaultAlignmentY);
-		if (!elementsArray[slot])
+		// The size of an elastic layout's is expanded if necessary.
+		if (slotNumber >= elements.size())
+		{
+			elements.resize(slotNumber + 1, 0);
+			recalculateAllSlotBounds();
+		}
+
+		// The new element's slot and alignment are recalculated.
+		// 'ALIGNMENT::keep' will leave the alignment in an axis unchanged.
+		recalculateSlotBounds(element);
+		element.set_alignment(defaultAlignmentX, defaultAlignmentY);
+		if (baseFreeLayout *layout = dynamic_cast<baseFreeLayout*>(&element))
+			layout->set_default_alignment(defaultAlignmentX, defaultAlignmentY);
+
+		// The element is added to the slot.
+		if (!elements[slotNumber])
 			elementCount ++;
-		elementsArray[slot] = newElement;
-		while (lowestEmptySlot < arraySize && elementsArray[lowestEmptySlot])
+		elements[slotNumber] = &element;
+		element.parentLayout = this;
+		element.slotNumber = slotNumber;
+
+		// The lowest empty slot and the highest full slot are recalculated.
+		while (lowestEmptySlot < elements.size() && elements[lowestEmptySlot])
 			lowestEmptySlot ++;
-		if (slot <= highestFullSlot || !defaultDisplay)
-			// There won't be a global recalculation of the layout's slots.
-			recalculateSlot(slot, newElement);
-		if (slot > highestFullSlot)
-		{
-			highestFullSlot = slot;
-			if (defaultDisplay)
-			{
-				// Slots of all elements will be recalculated.
-				numberOfSlots = slot + 1;
-				recalculateSlots();
-			}
-		}
+		if (slotNumber > highestFullSlot)
+			highestFullSlot = slotNumber;
 	}
 }
 
 
-void freeLayout::remove_element(int slot)
+baseElement* baseFreeLayout::remove_element(int slotNumber)
 {
-	if (slot >=0 && slot < arraySize && elementsArray[slot])
+	baseElement *e = 0;
+	if (slotNumber >=0 && slotNumber < elements.size() && elements[slotNumber])
 	{
-		elementsArray[slot] = 0;
+		e = elements[slotNumber];
+		e->parentLayout = 0;
+		e->slotNumber = -1;
+		elements[slotNumber] = 0;
 		elementCount --;
-		if (slot < lowestEmptySlot)
-			lowestEmptySlot = slot;
-		while (highestFullSlot >= 0 && !elementsArray[highestFullSlot])
+		if (slotNumber < lowestEmptySlot)
+			lowestEmptySlot = slotNumber;
+		while (highestFullSlot >= 0 && !elements[highestFullSlot])
 			highestFullSlot --;
-		if (slot > highestFullSlot && defaultDisplay)
-		{
-			// The removed element was in the highest full slot.
-			numberOfSlots = highestFullSlot + 1;
-			recalculateSlots();
-		}
 	}
+	return e;
 }
 
 
-void freeLayout::delete_element(int slot)
+void baseFreeLayout::remove_element(baseElement &element)
 {
-	if (slot >=0 && slot < arraySize && elementsArray[slot])
-	{
-		delete elementsArray[slot];
-		remove_element(slot);
-	}
+	// We check thet the element is indeed in the layout.
+	bool inLayout = false;
+	for (baseFreeLayout *l = element.parentLayout ; l && !inLayout ;
+		l = l->parentLayout)
+		if (l == this)
+			inLayout = true;
+	// We remove the element.
+	if (inLayout)
+		element.parentLayout->remove_element(element.slotNumber);
 }
 
 
-void freeLayout::delete_element_in_cascade(int slot)
+void baseFreeLayout::r_delete()
 {
-	if (slot >=0 && slot < arraySize && elementsArray[slot])
-	{
-		elementsArray[slot]->delete_in_cascade();
-		remove_element(slot);
-	}
-}
-
-
-void freeLayout::delete_in_cascade()
-{
-	for (int i = 0 ; i < arraySize ; i ++)
-		if (elementsArray[i])
-			elementsArray[i]->delete_in_cascade();
+	for (int i = 0 ; i < elements.size() ; i ++)
+		if (elements[i])
+			elements[i]->r_delete();
 	delete this;
 }
 
 
-/* CLASS horizontalLayout */
+/* CLASS baseHorizontalLayout */
 
 
-void horizontalLayout::recalculateSlot(int slot, element* element)
+void baseHorizontalLayout::recalculateSlotBounds(baseElement &element)
 {
-	float slotsWidth = contentWidth / numberOfSlots;
-	element->set_slot_position(contentPosX + slot * slotsWidth, contentPosY);
-	element->set_slot_size(slotsWidth, contentHeight);
+	if (elements.size() > 0)
+	{
+		int slotNumber = element.get_slot_number();
+		float slotsWidth = contentWidth / elements.size();
+		element.set_slot_position(contentPosX + slotNumber * slotsWidth,
+			contentPosY);
+		element.set_slot_size(slotsWidth, contentHeight);
+	}
 }
 
 
-horizontalLayout::horizontalLayout(float contentPosX, float contentPosY,
-	float contentWidth, float contentHeight, float slotPosX, float slotPosY,
-	float slotWidth, float slotHeight, int alignmentX, int alignmentY,
-	int depth, bool visible, int defaultAlignmentX, int defaultAlignmentY,
-	bool defaultDisplay, int numberOfSlots)
-	: freeLayout(contentPosX, contentPosY, contentWidth, contentHeight,
-	slotPosX, slotPosY, slotWidth, slotHeight, alignmentX, alignmentY,
-	depth, visible, defaultAlignmentX, defaultAlignmentY, defaultDisplay,
-	numberOfSlots)
-{
-}
-
-
-horizontalLayout::~horizontalLayout()
+baseHorizontalLayout::baseHorizontalLayout()
 {
 }
 
 
-horizontalLayout* horizontalLayout::copy()
+baseHorizontalLayout::~baseHorizontalLayout()
 {
-	horizontalLayout* newLayout = new horizontalLayout();
-	copy(newLayout);
-	return newLayout;
-}
-
-
-horizontalLayout* horizontalLayout::copy_in_cascade()
-{
-	horizontalLayout* newLayout = new horizontalLayout();
-	copy_in_cascade(newLayout);
-	return newLayout;
-}
-
-
-void horizontalLayout::copy(horizontalLayout* newLayout)
-{
-	freeLayout::copy(dynamic_cast<freeLayout*>(newLayout));
-}
-
-
-void horizontalLayout::copy_in_cascade(horizontalLayout* newLayout)
-{
-	freeLayout::copy_in_cascade(dynamic_cast<freeLayout*>(newLayout));
 }
 
 
 /* CLASS verticalLayout */
 
 
-void verticalLayout::recalculateSlot(int slot, element* element)
+void baseVerticalLayout::recalculateSlotBounds(baseElement &element)
 {
-	float slotsHeight = contentHeight / numberOfSlots; 
-	element->set_slot_position(contentPosX, contentPosY + slot * slotsHeight);
-	element->set_slot_size(contentWidth, slotsHeight);
+	if (elements.size() > 0)
+	{
+		int slotNumber = element.get_slot_number();
+		float slotsHeight = contentHeight / elements.size(); 
+		element.set_slot_position(contentPosX, contentPosY + slotNumber *
+			slotsHeight);
+		element.set_slot_size(contentWidth, slotsHeight);
+	}
 }
 
 
-verticalLayout::verticalLayout(float contentPosX, float contentPosY,
-	float contentWidth, float contentHeight, float slotPosX, float slotPosY,
-	float slotWidth, float slotHeight, int alignmentX, int alignmentY,
-	int depth, bool visible, int defaultAlignmentX, int defaultAlignmentY,
-	bool defaultDisplay, int numberOfSlots)
-	: freeLayout(contentPosX, contentPosY, contentWidth, contentHeight,
-	slotPosX, slotPosY, slotWidth, slotHeight, alignmentX, alignmentY,
-	depth, visible, defaultAlignmentX, defaultAlignmentY, defaultDisplay,
-	numberOfSlots)
-{
-}
-
-
-verticalLayout::~verticalLayout()
+baseVerticalLayout::baseVerticalLayout()
 {
 }
 
 
-verticalLayout* verticalLayout::copy()
+baseVerticalLayout::~baseVerticalLayout()
 {
-	verticalLayout* newLayout = new verticalLayout();
-	copy(newLayout);
-	return newLayout;
-}
-
-
-verticalLayout* verticalLayout::copy_in_cascade()
-{
-	verticalLayout* newLayout = new verticalLayout();
-	copy_in_cascade(newLayout);
-	return newLayout;
-}
-
-
-void verticalLayout::copy(verticalLayout* newLayout)
-{
-	freeLayout::copy(dynamic_cast<freeLayout*>(newLayout));
-}
-
-
-void verticalLayout::copy_in_cascade(verticalLayout* newLayout)
-{
-	freeLayout::copy_in_cascade(dynamic_cast<freeLayout*>(newLayout));
 }
 
 
 /* CLASS tableLayout */
 
 
-void tableLayout::recalculateSlot(int slot, element* element)
+void baseTableLayout::recalculateSlotBounds(baseElement &element)
 {
-	float slotsWidth = contentWidth / numberOfColumns;
-	float slotsHeight = contentHeight / numberOfRows;
-	int row = slot / numberOfRows;
-	int column = slot % numberOfRows;
-	element->set_slot_position(contentPosX + column * slotsWidth,
-		contentPosY + row * slotsHeight);
-	element->set_slot_size(slotsWidth, slotsHeight);
+	if (numberOfRows > 0 && numberOfColumns > 0)
+	{
+		int slotNumber = element.get_slot_number();
+		float slotsWidth = contentWidth / numberOfColumns;
+		float slotsHeight = contentHeight / numberOfRows;
+		int row = slotNumber / numberOfColumns;
+		int column = slotNumber % numberOfColumns;
+		element.set_slot_position(contentPosX + column * slotsWidth,
+			contentPosY + row * slotsHeight);
+		element.set_slot_size(slotsWidth, slotsHeight);
+	}
 }
 
 
-tableLayout::tableLayout(float contentPosX, float contentPosY,
-	float contentWidth, float contentHeight, float slotPosX, float slotPosY,
-	float slotWidth, float slotHeight, int alignmentX, int alignmentY,
-	int depth, bool visible, int defaultAlignmentX, int defaultAlignmentY,
-	int numberOfRows, int numberOfColumns)
-	: freeLayout(contentPosX, contentPosY, contentWidth, contentHeight,
-	slotPosX, slotPosY, slotWidth, slotHeight, alignmentX, alignmentY,
-	depth, visible, defaultAlignmentX, defaultAlignmentY, false,
-	numberOfRows * numberOfColumns)
+baseTableLayout::baseTableLayout(int numberOfRows, int numberOfColumns)
 {
+	if (numberOfRows < 0)
+		numberOfRows = 0;
+	if (numberOfColumns < 0)
+		numberOfColumns = 0;
 	this->numberOfRows = numberOfRows;
 	this->numberOfColumns = numberOfColumns;
 }
 
 
-tableLayout::~tableLayout()
+baseTableLayout::~baseTableLayout()
 {
 }
 
 
-int tableLayout::get_number_of_rows()
+bool baseTableLayout::is_slot_full(int row, int column)
+{
+	bool b = false;
+	if (row >= 0 && column >= 0 && row < numberOfRows &&
+		column < numberOfColumns)
+		b = baseFreeLayout::is_slot_full(row * numberOfColumns + column);
+	return b;
+}
+
+
+baseElement* baseTableLayout::get_element(int row, int column)
+{
+	baseElement* e = 0;
+	if (row >= 0 && column >= 0 && row < numberOfRows &&
+		column < numberOfColumns)
+		e = baseFreeLayout::get_element(row * numberOfColumns + column);
+	return e;
+}
+
+
+int baseTableLayout::get_number_of_rows()
 {
 	return numberOfRows;
 }
 
 
-int tableLayout::get_number_of_columns()
+int baseTableLayout::get_number_of_columns()
 {
 	return numberOfColumns;
 }
 
 
-void tableLayout::set_number_of_rows(int numberOfRows)
+void baseTableLayout::set_number_of_rows(int numberOfRows)
 {
-	if (numberOfRows >= 0)
+	if (numberOfRows >= 0 && numberOfRows != this->numberOfRows)
 	{
-		numberOfSlots = numberOfRows * numberOfColumns;
-		if (numberOfRows != this->numberOfRows)
-			recalculateSlots();
 		this->numberOfRows = numberOfRows;
+		elements.resize(numberOfRows * numberOfColumns, 0);
+		recalculateAllSlotBounds();
 	}
 }
 
 
-void tableLayout::set_number_of_columns(int numberOfColumns)
+void baseTableLayout::set_number_of_columns(int numberOfColumns)
 {
-	if (numberOfColumns >= 0)
+	if (numberOfColumns >= 0 && numberOfColumns != this->numberOfColumns)
 	{
-		numberOfSlots = numberOfRows * numberOfColumns;
-		if (numberOfColumns != this->numberOfColumns)
-			recalculateSlots();
 		this->numberOfColumns = numberOfColumns;
+		elements.resize(numberOfRows * numberOfColumns, 0);
+		recalculateAllSlotBounds();
 	}
 }
 
 
-void tableLayout::set_number_of_slots(int numberOfRows, int numberOfColumns)
+void baseTableLayout::set_size(int numberOfRows, int numberOfColumns)
 {
-	if (numberOfColumns >= 0)
+	if (numberOfRows >= 0 && numberOfColumns >= 0 && (numberOfRows !=
+		this->numberOfRows || numberOfColumns != this->numberOfColumns))
 	{
-		numberOfSlots = numberOfRows * numberOfColumns;
-		if (numberOfRows != this->numberOfRows ||
-			numberOfColumns != this->numberOfColumns)
-			recalculateSlots();
 		this->numberOfRows = numberOfRows;
 		this->numberOfColumns = numberOfColumns;
+		elements.resize(numberOfRows * numberOfColumns, 0);
+		recalculateAllSlotBounds();
 	}
 }
 
 
-tableLayout* tableLayout::copy()
+void baseTableLayout::copy(baseTableLayout &layout)
 {
-	tableLayout* newLayout = new tableLayout();
-	copy(newLayout);
-	return newLayout;
+	baseFreeLayout::copy(layout);
+	layout.numberOfRows = numberOfRows;
+	layout.numberOfColumns = numberOfColumns;
 }
 
 
-tableLayout* tableLayout::copy_in_cascade()
+void baseTableLayout::r_copy(baseTableLayout &layout)
 {
-	tableLayout* newLayout = new tableLayout();
-	copy_in_cascade(newLayout);
-	return newLayout;
+	baseFreeLayout::r_copy(layout);
+	layout.numberOfRows = numberOfRows;
+	layout.numberOfColumns = numberOfColumns;
 }
 
 
-void tableLayout::copy(tableLayout* newLayout)
+void baseTableLayout::add_element(baseElement &element, int row, int column)
 {
-	freeLayout::copy(dynamic_cast<freeLayout*>(newLayout));
-	newLayout->numberOfRows = numberOfRows;
-	newLayout->numberOfColumns = numberOfColumns;
+	if (row >= 0 && column >= 0 && row < numberOfRows &&
+		column < numberOfColumns)
+		baseFreeLayout::add_element(element, row * numberOfColumns + column);
 }
 
 
-void tableLayout::copy_in_cascade(tableLayout* newLayout)
+baseElement* baseTableLayout::remove_element(int row, int column)
 {
-	freeLayout::copy_in_cascade(dynamic_cast<freeLayout*>(newLayout));
-	newLayout->numberOfRows = numberOfRows;
-	newLayout->numberOfColumns = numberOfColumns;
+	baseElement *e = 0;
+	if (row >= 0 && column >= 0 && row < numberOfRows &&
+		column < numberOfColumns)
+		e = baseFreeLayout::remove_element(row * numberOfColumns + column);
+	return e;
 }

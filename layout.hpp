@@ -1,9 +1,13 @@
 #ifndef LAYOUT_HPP
 #define LAYOUT_HPP
 
+#include <vector>
+#include <string>
+#include <map>
+
+
 namespace LAYOUT
 {
-
 	/*
 	- Possible values for the alignment attributes in the element class.
 	*/
@@ -55,15 +59,54 @@ namespace LAYOUT
 
 
 	/*
+	- Incomplete declaration. Needed in class 'baseElement' (declared first).
+	*/
+	class baseFreeLayout;
+
+
+	/*
 	- An element that can be part of a layout.
+	- An element can only be part of one layout (and only once).
 	- Elements can (should) have content. To be defined in derived classes.
 	- Elements can fit in slots (the sapce a layout reserves for them).
 	- Content is allowed to fall outside of slot limits. It's up to derived
 	classes to manage that appropriately.
+	- This class shouldn't be instanced, but serve as a base for other classes.
 	*/
-	class element
+	class baseElement
 	{
 	protected:
+
+		/*
+		- Keeps count of the number of instanced elements, and is used to
+		provide them with unique ids upon initialisation.
+		*/
+		static int idGenerator;
+
+		/*
+		- Number which uniquely identifies the element.
+		- It's automatically assigned and can't be modified.
+		*/
+		int id;
+
+		/*
+		- The name of the element.
+		- If not specified, it's initialised to the empty string.
+		*/
+		std::string name;
+
+		/*
+		- Pointer to the parent layout.
+		- Used in order to prevent the element from being added to muliple
+		layouts (or multiple times to the same layout).
+		*/
+		baseFreeLayout *parentLayout;
+
+		/*
+		- Slot where the element is located in the parent layout.
+		- If there's no parent layout, its value is -1.
+		*/
+		int slotNumber;
 
 		/*
 		- The position of the content's top-left corner on the X axis.
@@ -127,30 +170,109 @@ namespace LAYOUT
 		- Depth of the element relative to other elements in the same layout.
 		- Elements with higher depth will be drawn first (and may be partially
 		or totally occluded by other elements).
+		- This attribute is taken into account when drawing a layout.
 		*/
 		int depth;
 
 		/*
-		- A 'false' value prevents the element from being displayed.
-		- Even if 'true', the element may still be hidden due to other factors.
+		- A 'false' value prevents the whole element from being displayed.
+		- This attribute takes precedence over other visibility ones.
+		- This attribute is taken into account when drawing a layout.
 		*/
 		bool visible;
+
+		/*
+		- A 'false' value prevents the element's content from being displayed.
+		- Only relevant if 'visible' is 'true'.
+		*/
+		bool contentVisible;
+
+		/*
+		- Draws the element's content.
+		- MUST be defined in instantiable derived classes.
+		*/
+		virtual void drawContent() = 0;
 
 	public:
 
 		/*
+		- Method to be called called when the mouse clicks on the content.
+		*/
+		void (*onContentClick)(std::map<std::string, std::string>&);
+
+		/*
+		- Method to be called called when the mouse clicks on the slot.
+		*/
+		void (*onSlotClick)(std::map<std::string, std::string>&);
+
+		/*
+		- Method to be called called when the mouse hovers over the content.
+		*/
+		void (*onContentHover)(std::map<std::string, std::string>&);
+
+		/*
+		- Method to be called called when the mouse hovers over the slot.
+		*/
+		void (*onSlotHover)(std::map<std::string, std::string>&);
+
+		/*
+		- Arguments passed to the 'onContentClick' method.
+		*/
+		std::map<std::string, std::string> onContentClickArgs;
+
+		/*
+		- Arguments passed to the 'onSlotClick' method.
+		*/
+		std::map<std::string, std::string> onSlotClickArgs;
+
+		/*
+		- Arguments passed to the 'onContentHover' method.
+		*/
+		std::map<std::string, std::string> onContentHoverArgs;
+
+		/*
+		- Arguments passed to the 'onSlotHover' method.
+		*/
+		std::map<std::string, std::string> onSlotHoverArgs;
+
+		/*
 		- Default constructor.
 		*/
-		element(float contentPosX = 0, float contentPosY = 0,
-			float contentWidth = 0, float contentHeight = 0, float slotPosX = 0,
-			float slotPosY = 0, float slotWidth = 0, float slotHeight = 0,
+		baseElement(std::string name = "", float contentPosX = 0,
+			float contentPosY = 0, float contentWidth = 0,
+			float contentHeight = 0, float slotPosX = 0, float slotPosY = 0,
+			float slotWidth = 0, float slotHeight = 0,
 			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
-			int depth = 0, bool visible = true);
+			int depth = 0, bool visible = true, bool contentVisible = true,
+			void (*onContentClick)(std::map<std::string, std::string>&) = 0,
+			void (*onSlotClick)(std::map<std::string, std::string>&) = 0,
+			void (*onContentHover)(std::map<std::string, std::string>&) = 0,
+			void (*onSlotHover)(std::map<std::string, std::string>&) = 0);
 		
 		/*
 		- Default destructor.
 		*/
-		virtual ~element();
+		virtual ~baseElement();
+
+		/*
+		- Returns the value of the attribute 'id'.
+		*/
+		int get_id();
+
+		/*
+		- Returns the value of the attribute 'name'.
+		*/
+		std::string get_name();
+
+		/*
+		- Returns the value of the attribute 'parentLayout'.
+		*/
+		baseFreeLayout* get_parent_layout();
+
+		/*
+		- Returns the value of the attribute 'slotNumber'.
+		*/
+		int get_slot_number();
 		
 		/*
 		- Returns the value of the attribute 'contentPosX'.
@@ -208,9 +330,19 @@ namespace LAYOUT
 		int get_depth();
 
 		/*
-		- Returns the attribute 'visible'.
+		- Returns the value of the attribute 'visible'.
 		*/
 		bool get_visibility();
+
+		/*
+		- Returns the value of the the attribute 'contentVisible'.
+		*/
+		bool get_content_visibility();
+
+		/*
+		- Sets the attribute 'name'.
+		*/
+		void set_name(std::string name);
 
 		/*
 		- Sets the attributes 'contentPosX' and 'contentPosY'.
@@ -245,9 +377,33 @@ namespace LAYOUT
 		void match_content_to_slot();
 
 		/*
+		- Calls 'match_content_to_slot()'.
+		- Can be redefined in derived classes.
+		*/
+		virtual void r_match_content_to_slot();
+
+		/*
 		- Updates the slot's size and position to match the content's.
 		*/
 		void match_slot_to_content();
+
+		/*
+		- Calls 'match_slot_to_content()'.
+		- Can be redefined in derived classes.
+		*/
+		virtual void r_match_slot_to_content();
+
+		/*
+		- Sets the attribute 'alignmentX'.
+		- Invalid values leave it unchanged.
+		*/
+		void set_alignment_x(int alignmentX);
+
+		/*
+		- Sets the attribute 'alignmentY'.
+		- Invalid values leave it unchanged.
+		*/
+		void set_alignment_y(int alignmentY);
 
 		/*
 		- Sets both alignment attributes.
@@ -262,10 +418,22 @@ namespace LAYOUT
 		void align();
 
 		/*
+		- Calls 'align()'.
+		- Can be redefined in derived classes.
+		*/
+		virtual void r_align();
+
+		/*
 		- Sets both alignment attributes and calls the 'align()' method.
 		- Invalid values align the content according to the existing alignment.
 		*/
 		void align(int alignmentX, int alignmentY);
+
+		/*
+		- Calls 'align(alignmentX, alignmentY)'.
+		- Can be redefined in derived classes.
+		*/
+		virtual void r_align(int alignmentX, int alignmentY);
 
 		/*
 		- Sets the attribute 'depth'.
@@ -276,86 +444,187 @@ namespace LAYOUT
 		- Sets the attribute 'visible'.
 		*/
 		void set_visibility(bool visible);
-		
+
+		/*
+		- Sets the attribute 'contentVisible'.
+		*/
+		void set_content_visibility(bool contentVisible);
+
 		/*
 		- Creates a copy of the current element in a new instance.
-		- Should be replicated in derived classes for their type.
+		- MUST be defined in instantiable derived classes for their type.
 		*/
-		element* copy();
+		virtual baseElement* clone() = 0;
 		
 		/*
-		- Creates a copy of the current element in a new instance.
-		- Should be replicated in derived classes for their type.
+		- Creates a recursive copy of the current element in a new instance.
+		- MUST be defined in instantiable derived classes for their type.
 		*/
-		element* copy_in_cascade();
+		virtual baseElement* r_clone() = 0;
+
+		/*
+		- Makes the received element into a copy of the current element.
+		- Can be redefined in derived classes.
+		*/
+		virtual void copy(baseElement &newElement);
 		
 		/*
 		- Makes the received element into a copy of the current element.
-		- Should be replicated in derived classes for their type.
+		- Can be redefined in derived classes.
 		*/
-		void copy(element* newElement);
-		
-		/*
-		- Makes the received element into a copy of the current element.
-		- Should be replicated in derived classes for their type.
-		*/
-		void copy_in_cascade(element* newElement);
+		virtual void r_copy(baseElement &newElement);
 		
 		/*
 		- Calls the default destructor.
 		- Can be redefined in derived classes.
 		*/
-		virtual void delete_in_cascade();
+		virtual void r_delete();
 
 		/*
-		- Does nothing.
+		- Calls 'drawContent' if the content is set visible.
 		- Can be redefined in derived classes.
 		*/
 		virtual void draw();
+
+		/*
+		- Methods 'r_copy', 'add_element' and 'remove_element' from
+		'baseFreeLayout' need to modify the attributes 'parentLayout' and
+		'slotNumber'.
+		*/
+		friend class baseFreeLayout;
+	};
+
+
+	/*
+	- Groups elements together.
+	- Allows storage, retrieval, and simultaneous event handling.
+	*/
+	class elementHandler
+	{
+	protected:
+
+		/*
+		- Map storing the elements, with their id as the key.
+		- There can be no repeated elements.
+		*/
+		std::map<int, baseElement*> idMap;
+
+	public:
+
+		/*
+		- Default constructor.
+		*/
+		elementHandler();
+
+		/*
+		- Copy constructor.
+		- The new handler contains pointers to the same elements as the source.
+		*/
+		elementHandler(elementHandler &handler);
+
+		/*
+		- Default destructor.
+		*/
+		~elementHandler();
+
+		/*
+		- Returns a copy of 'idMap'.
+		*/
+		std::map<int, baseElement*> get_map();
+
+		/*
+		- Makes the received handler into a copy of the current handler.
+		- The received one contains pointers to the same elements as the source.
+		*/
+		void copy(elementHandler &handler);
+
+		/*
+		- Returns a pointer to the element in the handler with the given id.
+		- If no element with that id is found, the return value is 0.
+		*/
+		baseElement* find_element(int elementId);
+
+		/*
+		- Returns a pointer to the element in the handler with the given name.
+		- If no element with that name is found, the return value is 0.
+		*/
+		baseElement* find_element(std::string elementName);
+
+		/*
+		- Adds the given element to the handler.
+		*/
+		void add_element(baseElement &element);
+
+		/*
+		- Recursively adds to the handler the layout and every element in it.
+		*/
+		void r_add_element(baseElement &element);
+
+		/*
+		- Removes from the handler the given element (if present).
+		*/
+		void remove_element(baseElement &element);
+
+		/*
+		- Removes from the handler the given element (if present).
+		- If the element is a layout, every element inside it is also
+		recursively removed.
+		*/
+		void r_remove_element(baseElement &element);
+
+		/*
+		- For every element in the handler, activates their 'onContentClick'
+		and/or 'onSlotClick' methods if the mouse cursor is within their content
+		or slot bounds, respectively.
+		- The position of the cursor is passed to the appropriate method(s) via
+		the arguments 'cursorPosX' and 'cursorPosY' in their 'Args' map.
+		*/
+		void click(float cursorPosX, float cursorPosY);
+
+		/*
+		- For every element in the handler, activates their 'onContentHover'
+		and/or 'onSlotHover' methods if the mouse cursor is within their content
+		or slot bounds, respectively.
+		- The position of the cursor is passed to the appropriate method(s) via
+		the arguments 'cursorPosX' and 'cursorPosY' in their Args map.
+		*/
+		void hover(float cursorPosX, float cursorPosY);
 	};
 	
 	
 	/*
 	- A layout (a series of slots where elements can be allocated).
 	- The position and size of slots in a free layout are not restricted by
-	those of the layout's content, or their number. Slots can overlap.
-	- By default, newly added elements keep their alignment values.
+	the bounds of the layout content. Slots can overlap.
+	- By default, newly added elements keep their content bounds and alignment.
+	- This class shouldn't be instanced, but serve as a base for other classes.
 	*/
-	class freeLayout : public element
+	class baseFreeLayout : public virtual baseElement
 	{
 	protected:
-
-		/*
-		- Number of slots in the layout.
-		- Can't be negative.
-		- Most types of layout use it to distribute the space among slots.
-		- Elements in equal or higher slot positions won't be displayed.
-		*/
-		int numberOfSlots;
-
-		/*
-		- Size of the array 'elementsArray'.
-		- Not tied to 'numberOfSlots' attribute, as elements can exist in higher
-		slots than the size of the displayable layout.
-		*/
-		int arraySize;
 		
 		/*
+		- Vector storing the pointers to all the elements inside the layout.
+		- Its size is the size of the layout (number of available slots).
+		*/
+		std::vector<baseElement*> elements;
+
+		/*
 		- Number of elements inside the layout (or number of full slots).
-		- Can be bigger than 'numberOfSlots' if there are full slots above it.
+		- Always less than or equal to the size of the layout.
 		*/
 		int elementCount;
 		
 		/*
-		- Position of the lowest empty slot in the layout.
-		- Technically, the first null position in 'elementsArray'.
+		- Position of the lowest empty slot in the 'elements' vector.
+		- Technically, the first null position in 'elements'.
 		- If a layout has no elements, its value is 0.
 		*/
 		int lowestEmptySlot;
 		
 		/*
-		- Position of the highest full slot in the layout.
-		- Technically, the last non-null position in 'elementsArray'.
+		- Position of the highest full slot in the 'elements' vector.
+		- Technically, the last non-null position in 'elements'.
 		- If a layout has no elements, its value is -1.
 		*/
 		int highestFullSlot;
@@ -377,62 +646,50 @@ namespace LAYOUT
 		int defaultAlignmentY;
 		
 		/*
-		- Activation status of the default display mode.
-		- The default display draws elements up to the highest full slot.
+		- If 'true', adding elements in slots greater than the layout's size
+		will cause the layout to be resized to fit them.
+		- If 'false', those elements cannot be added.
 		*/
-		bool defaultDisplay;
-		
-		/*
-		- Array storing the pointers to all the elements inside the layout.
-		*/
-		element** elementsArray;
-		
-		/*
-		- Creates a new 'elementsArray' with the specified size, and copies the
-		existing elements into it.
-		- Generally called for incrementing it, to avoid losing references.
-		- Can be redefined in derived classes.
-		*/
-		virtual void resizeArrays(int newArraySize);
+		bool elastic;
 
 		/*
 		- Recalculates the position and size of an element's slot given its
-		slot number in the layout.
+		position inside the 'elements' vector.
 		- In this case (free layout) it does nothing.
 		- Can be redefined in derived classes.
 		*/
-		virtual void recalculateSlot(int slot, element *element);
+		virtual void recalculateSlotBounds(baseElement &element);
 
 		/*
-		- Recalculates the slot position and size of every element inside the
-		layout up to 'numberOfSlots' - 1.
+		- Calls 'recalculateSlotBounds' for every element in the layout.
 		*/
-		void recalculateSlots();
+		void recalculateAllSlotBounds();
+
+		/*
+		- Calls the 'draw' method of every element in the layout.
+		- Non-visible elements are excluded.
+		- Elements are drawn in order of greater to lesser depth.
+		*/
+		void drawContent();
 
 	public:
 
 		/*
 		- Default constructor.
-		- The layout is initially empty and 'elementsArray' has size 1.
+		- The layout is initially empty.
 		*/
-		freeLayout(float contentPosX = 0, float contentPosY = 0,
-			float contentWidth = 0, float contentHeight = 0, float slotPosX = 0,
-			float slotPosY = 0, float slotWidth = 0, float slotHeight = 0,
-			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
-			int depth = 0, bool visible = true,
-			int defaultAlignmentX = ALIGNMENT::left,
-			int defaultAlignmentY = ALIGNMENT::top, bool defaultDisplay = true,
-			int numberOfSlots = 0);
+		baseFreeLayout(int size = 0, int defaultAlignmentX = ALIGNMENT::left,
+			int defaultAlignmentY = ALIGNMENT::top, bool elastic = true);
 
 		/*
 		- Default destructor.
 		*/
-		virtual ~freeLayout();
+		virtual ~baseFreeLayout();
 
 		/*
-		- Returns the value of the attribute 'numberOfSlots'.
+		- Returns the size of the layout (i.e. that of the 'elements' vector).
 		*/
-		int get_number_of_slots();
+		int get_size();
 
 		/*
 		- Returns the value of the attribute 'elementCount'.
@@ -460,27 +717,27 @@ namespace LAYOUT
 		int get_default_alignment_y();
 
 		/*
-		- Returns the value of the attribute 'defaultDisplay'.
+		- Returns the value of the attribute 'elastic'.
 		*/
-		bool get_default_display();
+		bool get_elasticity();
 		
 		/*
-		- Returns 'true' if the given slot (a position in 'elementsArray') has
+		- Returns 'true' if the given slot (a position in 'elements') has
 		an element, or 'false' if it's empty.
 		*/
-		bool is_slot_full(int slot);
+		bool is_slot_full(int slotNumber);
 		
 		/*
 		- Returns a pointer to the element in the specified slot, or null if
 		it's empty.
+		- Can be redefined in derived classes.
 		*/
-		element* get_element(int slot);
-		
+		virtual baseElement* get_element(int slotNumber);
+
 		/*
-		- Returns the element in the slot by the given position (or null if there
-		is none), and removes it from the layout.
+		- Returns a copy of the 'elements' vector.
 		*/
-		element* extract_element(int slot);
+		std::vector<baseElement*> get_elements();
 
 		/*
 		- Changes the position of the layout's content.
@@ -495,6 +752,25 @@ namespace LAYOUT
 		(relevant for derived classes).
 		*/
 		void set_content_size(float contentWidth, float contentHeight);
+		
+		/*
+		- Resizes the layout (i.e. resizes the 'elements' vector).
+		- If the value changes, position and size of slots inside the layout are
+		recalculated (relevant for derived classes).
+		*/
+		virtual void set_size(int size);
+
+		/*
+		- Sets the attribute 'defaultAlignmentX'.
+		- Invalid values leave it unchanged.
+		*/
+		void set_default_alignment_x(int defaultAlignmentX);
+
+		/*
+		- Sets the attribute 'defaultAlignmentY'.
+		- Invalid values leave it unchanged.
+		*/
+		void set_default_alignment_y(int defaultAlignmentY);
 
 		/*
 		- Sets the default alignment of the layout for both axis.
@@ -503,280 +779,184 @@ namespace LAYOUT
 			int defaultAlignmentY);
 		
 		/*
-		- Sets the attribute 'numberOfSlots'.
-		- Only works if the default display mode is off.
-		- If the value changes, position and size of slots inside the layout are
-		recalculated (relevant for derived classes).
+		- Sets the attribute 'elastic'.
 		*/
-		virtual void set_number_of_slots(int numberOfSlots);
-		
-		/*
-		- Sets the attribute 'defaultDisplay'.
-		- Turning on the default display mode will also modify the layout's number of
-		slots appropriately.
-		*/
-		void set_default_display(bool slotsDisplayed);
+		void set_elasticity(bool elasticity);
 
 		/*
-		- Aligns every element inside the layout according to its attributes.
+		- Recursively changes content position and size of every element inside
+		the layout, so they exactly match those of their slot.
 		*/
-		void align_all_elements();
+		void r_match_content_to_slot();
 
 		/*
-		- Aligns every element inside the layout according to the parameters.
+		- Recursively changes slot position and size of every element inside
+		the layout, so they exactly match those of their slot.
 		*/
-		void align_all_elements(int alignmentX, int alignmentY);
+		void r_match_slot_to_content();
+
+		/*
+		- Recursively aligns the layout and every element inside it in
+		accordance to their attributes.
+		*/
+		void r_align();
+
+		/*
+		- Recursively aligns the layout and every element inside it in
+		accordance to the parameters.
+		*/
+		void r_align(int alignmentX, int alignmentY);
 		
 		/*
-		- Creates a copy of the current layout in a new instance.
-		- Elements inside are not copied, and both layouts share the same
-		references. This can cause unexpected bahaviours if one of the two is
-		modified or deleted in cascade afterwards.
-		- Should be replicated in derived classes for their type.
+		- Copies the current layout's attributes into the received one.
+		- Elements inside are not copied (the layout keeps its elements if any).
+		- Can be redefined in derived classes.
 		*/
-		freeLayout* copy();
+		virtual void copy(baseFreeLayout &layout);
 		
 		/*
-		- Creates a copy of the current layout in a new instance.
-		- Elements inside are also recursively copied, which makes them safe to
-		modify, but the memory must later be freed separately.
-		- Should be replicated in derived classes for their type.
+		- Copies the current layout's attributes into the received one.
+		- Elements inside are also recursively cloned. Any existing pointers in
+		the received layout are lost.
+		- Can be redefined in derived classes.
 		*/
-		freeLayout* copy_in_cascade();
-		
+		virtual void r_copy(baseFreeLayout &layout);
+
 		/*
-		- Makes 'newLayout' into a copy of the current layout.
-		- Elements inside are not copied, and both layouts share the same
-		references. This can cause unexpected bahaviours if one of the two is
-		modified or deleted in cascade afterwards.
-		- Should be replicated in derived classes for their type.
+		- Returns a pointer to the element in the layout (or in a sublayout)
+		with the given id.
+		- If no element with that id is found, the return value is 0.
+		- Can be redefined in derived classes.
 		*/
-		void copy(freeLayout* newLayout);
-		
+		virtual baseElement* find_element(int elementId);
+
 		/*
-		- Makes 'newLayout' into a copy of the current layout.
-		- Elements inside are also recursively copied, which makes them safe to
-		modify, but the memory must later be freed separately.
-		- Should be replicated in derived classes for their type.
+		- Returns a pointer to the element in the layout (or in a sublayout)
+		with the given name.
+		- If no element with that name is found, the return value is 0.
+		- Can be redefined in derived classes.
 		*/
-		void copy_in_cascade(freeLayout* newLayout);
+		virtual baseElement* find_element(std::string elementName);
 		
 		/*
 		- Adds a given element to the layout at the lowest free slot.
 		- If the slot is full, the old element is removed (but not deleted).
-		- If the slot is higher than 'arraySize', the array is resized.
+		- If the element already has a parent layout, nothing happens.
+		- Can be redefined in derived classes.
 		*/
-		void add_element(element* newElement);
+		virtual void add_element(baseElement &element);
 		
 		/*
 		- Adds a given element to the layout at the specified slot.
 		- If the slot is full, the old element is removed (but not deleted).
-		- If the slot is higher than 'arraySize', the array is resized.
+		- If the element already has a parent layout, nothing happens.
 		- Can be redefined in derived classes.
 		*/
-		void add_element(element* newElement, int slot);
+		virtual void add_element(baseElement &element, int slotNumber);
 		
 		/*
-		- Removes an element from the layout at the specified slot.
-		- This doesn't delete the element, just the layout's reference to it.
-		*/
-		void remove_element(int slot);
-		
-		/*
-		- Removes and deletes an element from the layout at the specified slot.
-		- Only to be called if the element won't be used again.
-		*/
-		void delete_element(int slot);
-		
-		/*
-		- Removes an element from the layout, and recursively deletes it and all
-		elements inside it (if any), at the specified slot.
-		- Only to be called if the element (as well as those inside it) won't be
-		used again.
-		*/
-		void delete_element_in_cascade(int slot);
-		
-		/*
-		- Recursively deletes the layout and all elements elements inside it.
-		- Only to be called if the layout (and inside elements) won't be used
-		again.
+		- Removes an element from the layout at the given slot and returns it.
+		- This doesn't delete the element, just the layout's pointer to it.
+		- Returns 0 if the slot is invalid, or if it's empty.
 		- Can be redefined in derived classes.
 		*/
-		virtual void delete_in_cascade();
+		virtual baseElement* remove_element(int slotNumber);
 
 		/*
-		- Calls the 'draw' method of every element in the layout below 'size'.
-		- This includes non-visible elements, which should be handled inside
-		their classes' draw methods.
-		- Elements are drawn in order of greater to lesser depth.
+		- Removes an element from the layout (or from a sublayout), if present.
 		- Can be redefined in derived classes.
 		*/
-		virtual void draw();
+		virtual void remove_element(baseElement &element);
+		
+		/*
+		- Recursively deletes the layout and every element inside it.
+		*/
+		void r_delete();
 	};
 
 
 	/*
 	- A layout (a series of slots where elements can be allocated).
 	- Elements in an horizontal layout are drawn from left to right.
-	- Slots up to 'numberOfSlots' - 1 are assigned proportional horizontal
-	space, and vertical space equal to the height of the layout's content.
+	- Slots are assigned an equal share of horizontal space, and full vertical
+	space (relative to the layout content's height and width).
 	- By default, newly added elements change their alignment to top-left.
+	- This class shouldn't be instanced, but serve as a base for other classes.
 	*/
-	class horizontalLayout : public freeLayout
+	class baseHorizontalLayout : public virtual baseFreeLayout
 	{
 	protected:
 
 		/*
 		- Recalculates the position and size of an element's slot given its
-		slot number in the layout.
+		position inside the 'elements' vector.
 		*/
-		void recalculateSlot(int slot, element *element);
+		void recalculateSlotBounds(baseElement &element);
 
 	public:
 
 		/*
 		- Default constructor.
 		*/
-		horizontalLayout(float contentPosX = 0, float contentPosY = 0,
-			float contentWidth = 0, float contentHeight = 0, float slotPosX = 0,
-			float slotPosY = 0, float slotWidth = 0, float slotHeight = 0,
-			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
-			int depth = 0, bool visible = true,
-			int defaultAlignmentX = ALIGNMENT::left,
-			int defaultAlignmentY = ALIGNMENT::top, bool defaultDisplay = true,
-			int numberOfSlots = 0);
+		baseHorizontalLayout();
 
 		/*
 		- Default destructor.
 		*/
-		virtual ~horizontalLayout();
-
-		/*
-		- Creates a copy of the current layout in a new instance.
-		- Elements inside are not copied, and both layouts share the same
-		references. This can cause unexpected bahaviours if one of the two is
-		modified or deleted in cascade afterwards.
-		- Should be redefined in derived classes.
-		*/
-		horizontalLayout* copy();
-		
-		/*
-		- Creates a copy of the current layout in a new instance.
-		- Elements inside are also recursively copied, which makes them safe to
-		modify, but the memory must later be freed separately.
-		- Should be redefined in derived classes.
-		*/
-		horizontalLayout* copy_in_cascade();
-		
-		/*
-		- Makes 'newLayout' into a copy of the current layout.
-		- Elements inside are not copied, and both layouts share the same
-		references. This can cause unexpected bahaviours if one of the two is
-		modified or deleted in cascade afterwards.
-		- Should be redefined in derived classes.
-		*/
-		void copy(horizontalLayout* newLayout);
-		
-		/*
-		- Makes 'newLayout' into a copy of the current layout.
-		- Elements inside are also recursively copied, which makes them safe to
-		modify, but the memory must later be freed separately.
-		- Should be redefined in derived classes.
-		*/
-		void copy_in_cascade(horizontalLayout* newLayout);
+		virtual ~baseHorizontalLayout();
 	};
 
 	
 	/*
 	- A layout (a series of slots where elements can be allocated).
 	- Elements in a vertical layout are drawn from top to bottom.
-	- Slots up to 'numberOfSlots' - 1 are assigned proportional vertical space,
-	and horizontal space equal to the width of the layout's content.
+	- Slots are assigned an equal share of vertical space, and full horizontal
+	space (relative to the layout content's width and height).
 	- By default, newly added elements change their alignment to top-left.
+	- This class shouldn't be instanced, but serve as a base for other classes.
 	*/
-	class verticalLayout : public freeLayout
+	class baseVerticalLayout : public virtual baseFreeLayout
 	{
 	protected:
 
 		/*
 		- Recalculates the position and size of an element's slot given its
-		slot number in the layout.
+		position inside the 'elements' vector.
 		*/
-		void recalculateSlot(int slot, element *element);
+		void recalculateSlotBounds(baseElement &element);
 
 	public:
 
 		/*
 		- Default constructor.
 		*/
-		verticalLayout(float contentPosX = 0, float contentPosY = 0,
-			float contentWidth = 0, float contentHeight = 0, float slotPosX = 0,
-			float slotPosY = 0, float slotWidth = 0, float slotHeight = 0,
-			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
-			int depth = 0, bool visible = true,
-			int defaultAlignmentX = ALIGNMENT::left,
-			int defaultAlignmentY = ALIGNMENT::top, bool defaultDisplay = true,
-			int numberOfSlots = 0);
+		baseVerticalLayout();
 
 		/*
 		- Default destructor.
 		*/
-		~verticalLayout();
-
-		/*
-		- Creates a copy of the current layout in a new instance.
-		- Elements inside are not copied, and both layouts share the same
-		references. This can cause unexpected bahaviours if one of the two is
-		modified or deleted in cascade afterwards.
-		- Should be redefined in derived classes.
-		*/
-		verticalLayout* copy();
-		
-		/*
-		- Creates a copy of the current layout in a new instance.
-		- Elements inside are also recursively copied, which makes them safe to
-		modify, but the memory must later be freed separately.
-		- Should be redefined in derived classes.
-		*/
-		verticalLayout* copy_in_cascade();
-		
-		/*
-		- Makes 'newLayout' into a copy of the current layout.
-		- Elements inside are not copied, and both layouts share the same
-		references. This can cause unexpected bahaviours if one of the two is
-		modified or deleted in cascade afterwards.
-		- Should be redefined in derived classes.
-		*/
-		void copy(verticalLayout* newLayout);
-		
-		/*
-		- Makes 'newLayout' into a copy of the current layout.
-		- Elements inside are also recursively copied, which makes them safe to
-		modify, but the memory must later be freed separately.
-		- Should be redefined in derived classes.
-		*/
-		void copy_in_cascade(verticalLayout* newLayout);
+		virtual ~baseVerticalLayout();
 	};
 
 
 	/*
 	- A layout (a series of slots where elements can be allocated).
-	- Elements in a table layout are drawn from left to right until a row is
-	full, then start a new row from top to bottom.
+	- Elements in a table layout are positioned from left to right until a row
+	is full, then start a new row from top to bottom.
 	- The width of the layout's content is distributed equally between the slots
 	in each row, so does its height with the slots in each column.
 	- By default, newly added elements change their alignment to top-left.
-	- A table layout doesn't have default display mode. The number of rows and
-	colums must be specified.
+	- A table layout can't be elastic.
+	- This class shouldn't be instanced, but serve as a base for other classes.
 	*/
-	class tableLayout : public freeLayout
+	class baseTableLayout : public virtual baseFreeLayout
 	{
 	private:
 
 		/*
-		- The method for turning on the default alignment is hidden.
+		- The method for turning on elasticity is hidden.
 		*/
-		using freeLayout::set_default_display;
+		using baseFreeLayout::set_elasticity;
 
 	protected:
 
@@ -796,28 +976,21 @@ namespace LAYOUT
 
 		/*
 		- Recalculates the position and size of an element's slot given its
-		slot number in the layout.
+		position inside the 'elements' vector.
 		*/
-		void recalculateSlot(int slot, element *element);
+		void recalculateSlotBounds(baseElement &element);
 
 	public:
 
 		/*
 		- Default constructor.
 		*/
-		tableLayout(float contentPosX = 0, float contentPosY = 0,
-			float contentWidth = 0, float contentHeight = 0, float slotPosX = 0,
-			float slotPosY = 0, float slotWidth = 0, float slotHeight = 0,
-			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
-			int depth = 0, bool visible = true,
-			int defaultAlignmentX = ALIGNMENT::left,
-			int defaultAlignmentY = ALIGNMENT::top,  int numberOfRows = 0,
-			int numberOfColumns = 0);
+		baseTableLayout(int numberOfRows = 0, int numberOfColumns = 0);
 
 		/*
 		- Default destructor.
 		*/
-		~tableLayout();
+		virtual ~baseTableLayout();
 
 		/*
 		- Returns the value of the attribute 'numberOfRows'.
@@ -828,6 +1001,27 @@ namespace LAYOUT
 		- Returns the value of the attribute 'numberOfColumns'.
 		*/
 		int get_number_of_columns();
+
+		/*
+		- For the original overload of 'is_slot_full'.
+		*/
+		using baseFreeLayout::is_slot_full;
+
+		/*
+		- Calls 'is_slot_full' translating row and column to slot number.
+		*/
+		bool is_slot_full(int row, int column);
+		
+		/*
+		- For the original overload of 'get_element'.
+		*/
+		using baseFreeLayout::get_element;
+
+		/*
+		- Calls 'get_element' translating row and column to slot number.
+		- Can be redefined in derived classes.
+		*/
+		virtual baseElement* get_element(int row, int column);
 
 		/*
 		- Sets the attribute 'numberOfRows'.
@@ -845,47 +1039,49 @@ namespace LAYOUT
 
 		/*
 		- Sets the attributes 'numberOfRows' and 'numberOfColumns'.
-		- If any value changes, position and size of slots inside the layout are
-		recalculated.
-		- This method hides the inherited 'set_number_of_slots()'.
+		- If one or both values change, position and size of slots inside the
+		layout are recalculated.
+		- Hides the method 'set_size(int size)' from 'freeLayout'.
 		*/
-		void set_number_of_slots(int numberOfRows, int numberOfColumns);
+		void set_size(int numberOfRows, int numberOfColumns);
 
 		/*
-		- Creates a copy of the current layout in a new instance.
-		- Elements inside are not copied, and both layouts share the same
-		references. This can cause unexpected bahaviours if one of the two is
-		modified or deleted in cascade afterwards.
-		- Should be redefined in derived classes.
+		- Copies the current layout's attributes into the received one.
+		- Elements inside are not copied (the layout keeps its elements if any).
+		- Can be redefined in derived classes.
 		*/
-		tableLayout* copy();
+		virtual void copy(baseTableLayout &layout);
 		
 		/*
-		- Creates a copy of the current layout in a new instance.
-		- Elements inside are also recursively copied, which makes them safe to
-		modify, but the memory must later be freed separately.
-		- Should be redefined in derived classes.
+		- Copies the current layout's attributes into the received one.
+		- Elements inside are also recursively cloned. Any existing pointers in
+		the received layout are lost.
+		- Can be redefined in derived classes.
 		*/
-		tableLayout* copy_in_cascade();
-		
+		virtual void r_copy(baseTableLayout &layout);
+
 		/*
-		- Makes 'newLayout' into a copy of the current layout.
-		- Elements inside are not copied, and both layouts share the same
-		references. This can cause unexpected bahaviours if one of the two is
-		modified or deleted in cascade afterwards.
-		- Should be redefined in derived classes.
+		- For the original overloads of 'add_element'.
 		*/
-		void copy(tableLayout* newLayout);
-		
+		using baseFreeLayout::add_element;
+
 		/*
-		- Makes 'newLayout' into a copy of the current layout.
-		- Elements inside are also recursively copied, which makes them safe to
-		modify, but the memory must later be freed separately.
-		- Should be redefined in derived classes.
+		- Calls 'add_element' translating row and column to slot number.
+		- Can be redefined in derived classes.
 		*/
-		void copy_in_cascade(tableLayout* newLayout);
+		virtual void add_element(baseElement &element, int row, int column);
+
+		/*
+		- For the original overload of 'remove_element'.
+		*/
+		using baseFreeLayout::remove_element;
+
+		/*
+		- Calls 'remove_element' translating row and column to slot number.
+		- Can be redefined in derived classes.
+		*/
+		virtual baseElement* remove_element(int row, int column);
 	};
-
 
 };
 
