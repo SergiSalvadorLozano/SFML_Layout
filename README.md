@@ -19,13 +19,13 @@ This part of the code corresponds to the base classes containing most of the log
 * SFMLLayout.hpp
 * SFMLLayout.cpp
 
-This part of the code corresponds to those classes reliant on resources and functionality imported from SFML.
+This part of the code corresponds to those classes reliant on components imported from SFML.
 
 ----------
 
 * example.cpp
 
-This program is intended to demonstrate the usage and functionality of some of the classes and methods implemented by the 'SFML_Layout' libraries.
+This program is intended to illustrate the usage of some of the classes and methods implemented in the 'SFML_Layout' libraries.
 
 ----------
 
@@ -35,5 +35,5 @@ This folder contains a series of image files used as textures by 'example.cpp'.
 
 ----------
 
-If you have any problem, encouter an error, or want to contact me about this library, you can do so at:
+If you have any problem, encouter an error, or want to contact me about this library, you can do so at
 sergi@protonmail.ch
