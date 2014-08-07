@@ -1,7 +1,7 @@
 SFML_Layout
 ===========
 
-C++ classes expanding the basic SFML functionality in order to ease the process of building and managing layout-based UIs.
+C++ classes expanding the basic functionality of SFML in order to ease the process of building and managing layout-based UIs.
 
 ===========
 
