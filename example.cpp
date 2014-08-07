@@ -2,9 +2,9 @@
 |------------------------------------------------------------------------------|
 |                                 EXAMPLE.CPP                                  |
 |------------------------------------------------------------------------------|
-| - This program is intended to demonstrate the usage and functionality of     |
-| some of the classes and methods implemented by the "SFML_Layout" libraries.  |
-| - The intended behaviour consists of a simple sprite viewer. 'Previous' and  |
+| - This program is intended to illustrate the usage of some of the classes    |
+| and methods implemented in the 'SFML_Layout' libraries.                      |
+| - The intended behaviour is that of a simple sprite viewer. 'Previous' and   |
 | 'Next' buttons allow switching between a list of image sprites, with an 'X'  |
 | button which closes the window and quits the program.                        |
 | - The sources for the borrowed textures used in this example can be found in |

@@ -4,8 +4,8 @@
 |------------------------------------------------------------------------------|
 | - Header file with the declarations of the classes and methods implemented   |
 | in the source file 'SFMLLayout.cpp'.                                         |
-| - This part of the code corresponds to those classes reliant on resources    |
-| and functionality imported from SFML.                                        |
+| - This part of the code corresponds to those classes reliant on components   |
+|  imported from SFML.                                                         |
 |------------------------------------------------------------------------------|
 | AUTHOR: Sergi Salvador Lozano.                                               |
 | FIRST CREATED: 2014/06/01.                                                   |
