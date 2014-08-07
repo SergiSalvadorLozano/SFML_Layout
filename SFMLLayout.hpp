@@ -1,3 +1,19 @@
+/*
+|------------------------------------------------------------------------------|
+|                                SFMLLAYOUT.HPP                                |
+|------------------------------------------------------------------------------|
+| - Header file with the declarations of the classes and methods implemented   |
+| in the source file 'SFMLLayout.cpp'.                                         |
+| - This part of the code corresponds to those classes reliant on resources    |
+| and functionality imported from SFML.                                        |
+|------------------------------------------------------------------------------|
+| AUTHOR: Sergi Salvador Lozano.                                               |
+| FIRST CREATED: 2014/06/01.                                                   |
+| LAST UPDATED: 2014/08/07.                                                    |
+|------------------------------------------------------------------------------|
+*/
+
+
 #ifndef SFML_LAYOUT_HPP
 #define SFML_LAYOUT_HPP
 
@@ -320,10 +336,8 @@ namespace LAYOUT
 			float slotPosY = 0, float slotWidth = 0, float slotHeight = 0,
 			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
 			int depth = 0, bool visible = true, bool contentVisible = true,
-			void (*onContentClick)(std::map<std::string, std::string>&) = 0,
-			void (*onSlotClick)(std::map<std::string, std::string>&) = 0,
-			void (*onContentHover)(std::map<std::string, std::string>&) = 0,
-			void (*onSlotHover)(std::map<std::string, std::string>&) = 0,
+			std::map<std::string, event*> &events =
+			std::map<std::string, event*>::map<std::string, event*>(),
 			sf::RenderWindow* drawingWindow = 0,
 			sf::Sprite* background = 0,
 			int backgroundModeX = DRAW::adjust,
@@ -447,10 +461,8 @@ namespace LAYOUT
 			float slotWidth = 0, float slotHeight = 0,
 			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
 			int depth = 0, bool visible = true, bool contentVisible = true,
-			void (*onContentClick)(std::map<std::string, std::string>&) = 0,
-			void (*onSlotClick)(std::map<std::string, std::string>&) = 0,
-			void (*onContentHover)(std::map<std::string, std::string>&) = 0,
-			void (*onSlotHover)(std::map<std::string, std::string>&) = 0,
+			std::map<std::string, event*> &events =
+			std::map<std::string, event*>::map<std::string, event*>(),
 			int size = 0, int defaultAlignmentX = ALIGNMENT::left,
 			int defaultAlignmentY = ALIGNMENT::top, bool elastic = true,
 			sf::RenderWindow* defaultWindow = 0, sf::Sprite* background = 0,
@@ -574,10 +586,8 @@ namespace LAYOUT
 			float slotWidth = 0, float slotHeight = 0,
 			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
 			int depth = 0, bool visible = true, bool contentVisible = true,
-			void (*onContentClick)(std::map<std::string, std::string>&) = 0,
-			void (*onSlotClick)(std::map<std::string, std::string>&) = 0,
-			void (*onContentHover)(std::map<std::string, std::string>&) = 0,
-			void (*onSlotHover)(std::map<std::string, std::string>&) = 0,
+			std::map<std::string, event*> &events =
+			std::map<std::string, event*>::map<std::string, event*>(),
 			int size = 0, int defaultAlignmentX = ALIGNMENT::left,
 			int defaultAlignmentY = ALIGNMENT::top, bool elastic = true,
 			sf::RenderWindow* defaultWindow = 0, sf::Sprite* background = 0,
@@ -627,10 +637,8 @@ namespace LAYOUT
 			float slotWidth = 0, float slotHeight = 0,
 			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
 			int depth = 0, bool visible = true, bool contentVisible = true,
-			void (*onContentClick)(std::map<std::string, std::string>&) = 0,
-			void (*onSlotClick)(std::map<std::string, std::string>&) = 0,
-			void (*onContentHover)(std::map<std::string, std::string>&) = 0,
-			void (*onSlotHover)(std::map<std::string, std::string>&) = 0,
+			std::map<std::string, event*> &events =
+			std::map<std::string, event*>::map<std::string, event*>(),
 			int size = 0, int defaultAlignmentX = ALIGNMENT::left,
 			int defaultAlignmentY = ALIGNMENT::top, bool elastic = true,
 			sf::RenderWindow* defaultWindow = 0, sf::Sprite* background = 0,
@@ -687,10 +695,8 @@ namespace LAYOUT
 			float slotWidth = 0, float slotHeight = 0,
 			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
 			int depth = 0, bool visible = true, bool contentVisible = true,
-			void (*onContentClick)(std::map<std::string, std::string>&) = 0,
-			void (*onSlotClick)(std::map<std::string, std::string>&) = 0,
-			void (*onContentHover)(std::map<std::string, std::string>&) = 0,
-			void (*onSlotHover)(std::map<std::string, std::string>&) = 0,
+			std::map<std::string, event*> &events =
+			std::map<std::string, event*>::map<std::string, event*>(),
 			int numberOfRows = 0, int numberOfColumns = 0,
 			int defaultAlignmentX = ALIGNMENT::left,
 			int defaultAlignmentY = ALIGNMENT::top,

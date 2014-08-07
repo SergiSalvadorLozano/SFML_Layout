@@ -1,3 +1,25 @@
+/*
+|------------------------------------------------------------------------------|
+|                                 EXAMPLE.CPP                                  |
+|------------------------------------------------------------------------------|
+| - This program is intended to demonstrate the usage and functionality of     |
+| some of the classes and methods implemented by the "SFML_Layout" libraries.  |
+| - The intended behaviour consists of a simple sprite viewer. 'Previous' and  |
+| 'Next' buttons allow switching between a list of image sprites, with an 'X'  |
+| button which closes the window and quits the program.                        |
+| - The sources for the borrowed textures used in this example can be found in |
+| the text file "Assets/image_source.txt".                                     |
+| - When loading sprite textures, this program uses Windows paths. If you are  |
+| executing this in a different system you should change them appropriately    |
+| (lines 100-108).                                                             |
+|------------------------------------------------------------------------------|
+| AUTHOR: Sergi Salvador Lozano.                                               |
+| FIRST CREATED: 2014/06/01.                                                   |
+| LAST UPDATED: 2014/08/07.                                                    |
+|------------------------------------------------------------------------------|
+*/
+
+
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include "SFMLLayout.hpp"
@@ -6,9 +28,9 @@
 /*
 - Incomplete declarations for wrappers. More about this later.
 */
-void change_eye_wrapper(std::map<std::string, std::string> &argMap);
-void show_dot_wrapper(std::map<std::string, std::string> &argMap);
-void close_window_wrapper(std::map<std::string, std::string> &argMap);
+void change_eye_wrapper(std::map<std::string, void*> &args);
+void show_dot_wrapper(std::map<std::string, void*> &args);
+void close_window_wrapper(std::map<std::string, void*> &args);
 
 
 /*
@@ -53,6 +75,17 @@ class layoutExample
 	sf::Sprite quitSprite;
 	sf::Sprite backgroundSprite;
 
+	// Events.
+	LAYOUT::event onPrevClick;
+	LAYOUT::event onNextClick;
+	LAYOUT::event onQuitClick;
+	LAYOUT::event onPrevHover;
+	LAYOUT::event onNextHover;
+
+	// Default arguments for event methods.
+	int arg1, arg2;
+	std::string arg3, arg4;
+
 public:
 
 	/*
@@ -63,6 +96,7 @@ public:
 		this->window = &window;
 
 		// Textures are loaded from image files.
+		// The following paths are formatted with Windows file systems in mind.
 		eyeTextures[0].loadFromFile("Assets\\eye-gray.png");
 		eyeTextures[1].loadFromFile("Assets\\eye-blue.png");
 		eyeTextures[2].loadFromFile("Assets\\eye-green.png");
@@ -157,21 +191,48 @@ public:
 		outerLayout.r_align();
 		outerLayout.r_set_drawing_window(window);
 
-		// Some elements are assigned on click and/or on hover functionality.
-		prevTextElement.onSlotClick = &change_eye_wrapper;
-		prevTextElement.onSlotClickArgs["move"] = "-1";
-		nextTextElement.onSlotClick = &change_eye_wrapper;
-		nextTextElement.onSlotClickArgs["move"] = "1";
-		prevTextElement.onSlotHover = &show_dot_wrapper;
-		prevTextElement.onSlotHoverArgs["dot"] = "prev";
-		nextTextElement.onSlotHover = &show_dot_wrapper;
-		nextTextElement.onSlotHoverArgs["dot"] = "next";
-		quitElement.onContentClick = &close_window_wrapper;
+		// Some elements are assigned event-driven functionality.
+		prevTextElement.add_event("onClick", onPrevClick);
+		prevTextElement.add_event("onHover", onPrevHover);
+		nextTextElement.add_event("onClick", onNextClick);
+		nextTextElement.add_event("onHover", onNextHover);
+		quitElement.add_event("onClick", onQuitClick);
 
 		// Adding them to a handler will make handling those events easier.
 		handler.add_element(prevTextElement);
 		handler.add_element(nextTextElement);
 		handler.add_element(quitElement);
+
+		// Events are provided with condition and effect methods, and default
+		// arguments that will be passed on to them when activated.
+		onPrevClick.set_event_condition(LAYOUT::position_inside_slot_frame);
+		onPrevClick.set_event_effect(change_eye_wrapper);
+		onPrevClick.add_default_condition_argument(
+			"element", static_cast<LAYOUT::baseElement*>(&prevTextElement));
+		onPrevClick.add_default_effect_argument("move", &(arg1 = -1));
+
+		onNextClick.set_event_condition(LAYOUT::position_inside_slot_frame);
+		onNextClick.set_event_effect(change_eye_wrapper);
+		onNextClick.add_default_condition_argument(
+			"element", static_cast<LAYOUT::baseElement*>(&nextTextElement));
+		onNextClick.add_default_effect_argument("move", &(arg2 = 1));
+
+		onPrevHover.set_event_condition(LAYOUT::position_inside_slot_frame);
+		onPrevHover.set_event_effect(show_dot_wrapper);
+		onPrevHover.add_default_condition_argument(
+			"element", static_cast<LAYOUT::baseElement*>(&prevTextElement));
+		onPrevHover.add_default_effect_argument("dot", &(arg3 = "prev"));
+
+		onNextHover.set_event_condition(LAYOUT::position_inside_slot_frame);
+		onNextHover.set_event_effect(show_dot_wrapper);
+		onNextHover.add_default_condition_argument(
+			"element", static_cast<LAYOUT::baseElement*>(&nextTextElement));
+		onNextHover.add_default_effect_argument("dot", &(arg4 = "next"));
+
+		onQuitClick.set_event_condition(LAYOUT::position_inside_content_frame);
+		onQuitClick.set_event_effect(close_window_wrapper);
+		onQuitClick.add_default_condition_argument(
+			"element", static_cast<LAYOUT::baseElement*>(&quitElement));
 	}
 
 	/*
@@ -196,27 +257,24 @@ public:
 	/*
 	- Changes the eye sprite.
 	*/
-	void change_eye(std::map<std::string, std::string> &argMap)
+	void change_eye(int move)
 	{
-		if (argMap["move"] == "1" || argMap["move"] == "-1")
-		{
-			eyeNumber += std::stoi(argMap["move"]);
-			if (eyeNumber < 0)
-				eyeNumber = 3;
-			else if (eyeNumber > 3)
-				eyeNumber = 0;
-			eyeElement.set_content(eyeSprites[eyeNumber]);
-		}
+		eyeNumber += move;
+		if (eyeNumber < 0)
+			eyeNumber = 3;
+		else if (eyeNumber > 3)
+			eyeNumber = 0;
+		eyeElement.set_content(eyeSprites[eyeNumber]);
 	}
 
 	/*
-	- Shows a blue dot.
+	- Shows a blue dot left of either the "previous" or "next" sprites.
 	*/
-	void show_dot(std::map<std::string, std::string> &argMap)
+	void show_dot(std::string &dot)
 	{
-		if (argMap["dot"] == "prev")
+		if (dot == "prev")
 			prevDotElement.set_content_visibility(true);
-		else if (argMap["dot"] == "next")
+		else if (dot == "next")
 			nextDotElement.set_content_visibility(true);
 	}
 
@@ -233,7 +291,16 @@ public:
 	*/
 	void click(float cursorPosX, float cursorPosY)
 	{
-		handler.click(cursorPosX, cursorPosY);
+		// While creating the events, we added to the conditions' default
+		// arguments a pointer to the appropriate layout element.
+		// The condition methods still require the cursor position, so
+		// we can pass those arguments now to all "onClick" events.
+		std::map<std::string, void*> condArgs;
+		condArgs["posX"] = &cursorPosX;
+		condArgs["posY"] = &cursorPosY;
+		// 'activate_events' has an optional third argument for extra effect
+		// arguments, but we don't need it now (default arguments are enough).
+		handler.activate_events("onClick", condArgs);
 	}
 
 	/*
@@ -241,32 +308,57 @@ public:
 	*/
 	void hover(float cursorPosX, float cursorPosY)
 	{
-		handler.hover(cursorPosX, cursorPosY);
+		std::map<std::string, void*> condArgs;
+		condArgs["posX"] = &cursorPosX;
+		condArgs["posY"] = &cursorPosY;
+		handler.activate_events("onHover", condArgs);
 	}
 };
 
 
 /*
-- For handling events, layout elements can only be directly assigned generic
-functions.
+- When trying to handle event conditions and effects, only generic functions can
+be directly assigned.
 - In order to assign class methods, it's necessary to either make those methods
 static, or to use global wrappers, plus a global pointer to a class instance.
 - This situation is described in greater detail in C++ FAQ 33.1 and 33.2
 (http://www.parashift.com/c++-faq-lite/fnptr-vs-memfnptr-types.html).
 */
+
+/*
+- Next there are the wrappers for all event effect methods.
+- We can also use them for casting the required arguments to their original
+type (from void*) before passing them on to the appropropriate class method.
+- It's a good practice to make sure that the arguments with the names we want
+exist in the map, but that can be omitted if we are certain that they are.
+*/
+
 layoutExample *example_gp;
 
-void change_eye_wrapper(std::map<std::string, std::string> &argMap)
+
+void change_eye_wrapper(std::map<std::string, void*> &args)
 {
-	example_gp->change_eye(argMap);
+	std::map<std::string, void*>::iterator it = args.find("move");
+	if (it != args.end())
+	{
+		int *move = static_cast<int*>(it->second);
+		example_gp->change_eye(*move);
+	}
 }
 
-void show_dot_wrapper(std::map<std::string, std::string> &argMap)
+
+void show_dot_wrapper(std::map<std::string, void*> &args)
 {
-	example_gp->show_dot(argMap);
+	std::map<std::string, void*>::iterator it = args.find("dot");
+	if (it != args.end())
+	{
+		std::string *dot = static_cast<std::string*>(it->second);
+		example_gp->show_dot(*dot);
+	}
 }
 
-void close_window_wrapper(std::map<std::string, std::string> &argMap)
+
+void close_window_wrapper(std::map<std::string, void*> &args)
 {
 	example_gp->close_window();
 }

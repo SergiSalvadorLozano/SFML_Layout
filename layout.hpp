@@ -1,7 +1,24 @@
+/*
+|------------------------------------------------------------------------------|
+|                                  LAYOUT.HPP                                  |
+|------------------------------------------------------------------------------|
+| - Header file with the declarations of the classes and methods implemented   |
+| in the source file 'layout.cpp'.                                             |
+| - This part of the code corresponds to the base classes containing most of   |
+| the logic and functionality independent from specific graphic libraries.     |
+|------------------------------------------------------------------------------|
+| AUTHOR: Sergi Salvador Lozano.                                               |
+| FIRST CREATED: 2014/06/01.                                                   |
+| LAST UPDATED: 2014/08/07.                                                    |
+|------------------------------------------------------------------------------|
+*/
+
+
 #ifndef LAYOUT_HPP
 #define LAYOUT_HPP
 
 #include <vector>
+#include <list>
 #include <string>
 #include <map>
 
@@ -59,9 +76,10 @@ namespace LAYOUT
 
 
 	/*
-	- Incomplete declaration. Needed in class 'baseElement' (declared first).
+	- Incomplete declarations. Needed in class 'baseElement' (declared first).
 	*/
 	class baseFreeLayout;
+	class event;
 
 
 	/*
@@ -193,47 +211,12 @@ namespace LAYOUT
 		*/
 		virtual void drawContent() = 0;
 
+		/*
+		- Map of events associated to the element, each identified by a string.
+		*/
+		std::map<std::string, event*> events;
+
 	public:
-
-		/*
-		- Method to be called called when the mouse clicks on the content.
-		*/
-		void (*onContentClick)(std::map<std::string, std::string>&);
-
-		/*
-		- Method to be called called when the mouse clicks on the slot.
-		*/
-		void (*onSlotClick)(std::map<std::string, std::string>&);
-
-		/*
-		- Method to be called called when the mouse hovers over the content.
-		*/
-		void (*onContentHover)(std::map<std::string, std::string>&);
-
-		/*
-		- Method to be called called when the mouse hovers over the slot.
-		*/
-		void (*onSlotHover)(std::map<std::string, std::string>&);
-
-		/*
-		- Arguments passed to the 'onContentClick' method.
-		*/
-		std::map<std::string, std::string> onContentClickArgs;
-
-		/*
-		- Arguments passed to the 'onSlotClick' method.
-		*/
-		std::map<std::string, std::string> onSlotClickArgs;
-
-		/*
-		- Arguments passed to the 'onContentHover' method.
-		*/
-		std::map<std::string, std::string> onContentHoverArgs;
-
-		/*
-		- Arguments passed to the 'onSlotHover' method.
-		*/
-		std::map<std::string, std::string> onSlotHoverArgs;
 
 		/*
 		- Default constructor.
@@ -244,10 +227,8 @@ namespace LAYOUT
 			float slotWidth = 0, float slotHeight = 0,
 			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
 			int depth = 0, bool visible = true, bool contentVisible = true,
-			void (*onContentClick)(std::map<std::string, std::string>&) = 0,
-			void (*onSlotClick)(std::map<std::string, std::string>&) = 0,
-			void (*onContentHover)(std::map<std::string, std::string>&) = 0,
-			void (*onSlotHover)(std::map<std::string, std::string>&) = 0);
+			std::map<std::string, event*> &events =
+			std::map<std::string, event*>::map<std::string, event*>());
 		
 		/*
 		- Default destructor.
@@ -338,6 +319,17 @@ namespace LAYOUT
 		- Returns the value of the the attribute 'contentVisible'.
 		*/
 		bool get_content_visibility();
+
+		/*
+		- Returns a reference to the whole map of events for the element.
+		*/
+		std::map<std::string, event*>& get_events();
+
+		/*
+		- Returns a pointer to the event associated to a given name.
+		- If there is none, the return value is 0.
+		*/
+		event* find_event(std::string eventName);
 
 		/*
 		- Sets the attribute 'name'.
@@ -449,6 +441,22 @@ namespace LAYOUT
 		- Sets the attribute 'contentVisible'.
 		*/
 		void set_content_visibility(bool contentVisible);
+
+		/*
+		- Sets the attribute 'events' as a copy of the given map.
+		*/
+		void set_events(std::map<std::string, event*> &events);
+
+		/*
+		- Adds an event under the given name.
+		- If there is already one, it is overwritten.
+		*/
+		void add_event(std::string eventName, event &e);
+
+		/*
+		- Removes from the element the event under the given name (if any).
+		*/
+		void remove_event(std::string eventName);
 
 		/*
 		- Creates a copy of the current element in a new instance.
@@ -573,24 +581,150 @@ namespace LAYOUT
 		void r_remove_element(baseElement &element);
 
 		/*
-		- For every element in the handler, activates their 'onContentClick'
-		and/or 'onSlotClick' methods if the mouse cursor is within their content
-		or slot bounds, respectively.
-		- The position of the cursor is passed to the appropriate method(s) via
-		the arguments 'cursorPosX' and 'cursorPosY' in their 'Args' map.
+		- For all elements in the handler, activates the events identified by a
+		given string.
+		- New maps of arguments for condition and effect methods can be
+		provided, in which case they will be added to the default maps.
+		- If an argument is provided under the same string that an existing
+		default argument, the new one overwrites the default one.
 		*/
-		void click(float cursorPosX, float cursorPosY);
-
-		/*
-		- For every element in the handler, activates their 'onContentHover'
-		and/or 'onSlotHover' methods if the mouse cursor is within their content
-		or slot bounds, respectively.
-		- The position of the cursor is passed to the appropriate method(s) via
-		the arguments 'cursorPosX' and 'cursorPosY' in their Args map.
-		*/
-		void hover(float cursorPosX, float cursorPosY);
+		void activate_events(std::string eventName,
+			std::map<std::string, void*> &conditionArgs =
+			std::map<std::string, void*>::map<std::string, void*>(),
+			std::map<std::string, void*> &effectArgs =
+			std::map<std::string, void*>::map<std::string, void*>());
 	};
 	
+
+	/*
+	- An event. An association of a condition and an effect.
+	*/
+	class event
+	{
+	protected:
+
+		/*
+		- Type redefinitions for pointers to functions.
+		- These redefinitions make it easier to manage the types while using
+		them in method arguments or return values.
+		*/
+		typedef bool (*eventConditionType)(std::map<std::string, void*>&);
+		typedef void (*eventEffectType)(std::map<std::string, void*>&);
+
+		/*
+		- A method implementing the condition to decide if the event effect
+		should be triggered.
+		- Without a condition, the effect (if any) will always be triggered
+		upon activation.
+		*/
+		eventConditionType eventCondition;
+		
+		/*
+		- A method implementing the effect of the event.
+		- Without an effect, nothing will be triggered upon activation.
+		*/
+		eventEffectType eventEffect;
+
+		/*
+		- The set of arguments passed on by default to the condition function.
+		*/
+		std::map<std::string, void*> defaultConditionArgs;
+
+		/*
+		- The set of arguments passed on by default to the effect function.
+		*/
+		std::map<std::string, void*> defaultEffectArgs;
+
+	public:
+
+		/*
+		- Default constructor.
+		*/
+		event(eventConditionType eventCondition = 0,
+			eventEffectType eventEffect = 0,
+			std::map<std::string, void*> &defaultConditionArgs =
+			std::map<std::string, void*>::map<std::string, void*>(),
+			std::map<std::string, void*> &defaultEffectArgs =
+			std::map<std::string, void*>::map<std::string, void*>());
+
+		/*
+		- Returns a pointer to the event condition function.
+		*/
+		eventConditionType get_event_condition();
+
+		/*
+		- Returns a pointer to the event effect function..
+		*/
+		eventEffectType get_event_effect();
+
+		/*
+		- Returns a reference to the attribute 'defaultConditionArgs'.
+		*/
+		std::map<std::string, void*>& get_default_condition_args();
+
+		/*
+		- Returns a reference to the attribute 'defaultEffectArgs'.
+		*/
+		std::map<std::string, void*>& get_default_effect_args();
+
+		/*
+		- Sets the pointer to the event condition function.
+		*/
+		void set_event_condition(eventConditionType eventCondition);
+
+		/*
+		- Sets the pointer to the event effect function.
+		*/
+		void set_event_effect(eventEffectType eventEffect);
+
+		/*
+		- Sets the attribute 'defaultConditionArgs' as a copy of the given map.
+		*/
+		void set_default_condition_args(
+			std::map<std::string, void*> &defaultConditionArgs);
+
+		/*
+		- Sets the attribute 'defaultEffectArgs' as a copy of the given map.
+		*/
+		void set_default_effect_args(
+			std::map<std::string, void*> &defaultEffectArgs);
+
+		/*
+		- Adds an argument to the default condition map.
+		- If there is already an argument with that name, it's overwritten.
+		*/
+		void add_default_condition_argument(std::string argName,
+			void *argValue);
+
+		/*
+		- Adds an argument to the default effect map.
+		- If there is already an argument with that name, it's overwritten.
+		*/
+		void add_default_effect_argument(std::string argName, void *argValue);
+
+		/*
+		- If it exists, removes the argument with the given name from the
+		default condition map.
+		*/
+		void remove_default_condition_argument(std::string argName);
+
+		/*
+		- If it exists, removes the argument with the given name from the
+		default effect map.
+		*/
+		void remove_default_effect_argument(std::string argName);
+
+		/*
+		- Checks that the codition is fulfilled, and if so activates the effect.
+		- The method receives up to two argument maps, to be passed on to the
+		condition and effect methods respectively.
+		*/
+		void activate(std::map<std::string, void*> &conditionArgs =
+			std::map<std::string, void*>::map<std::string, void*>(),
+			std::map<std::string, void*> &effectArgs =
+			std::map<std::string, void*>::map<std::string, void*>());
+	};
+
 	
 	/*
 	- A layout (a series of slots where elements can be allocated).
@@ -1083,7 +1217,41 @@ namespace LAYOUT
 		virtual baseElement* remove_element(int row, int column);
 	};
 
+
+	/*
+	- When trying to handle event conditions and effects, only generic functions
+	can be directly assigned.
+	- In order to assign class methods, it's necessary to either make those
+	methods static, or to use global wrappers, plus a global pointer to a class
+	instance.
+	- This situation is described in greater detail in C++ FAQ 33.1 and 33.2
+	(http://www.parashift.com/c++-faq-lite/fnptr-vs-memfnptr-types.html).
+	*/
+
+	/*
+	- Next there are some generic functions commonly used as event conditions.
+	*/
+
+	/*
+	- Returns true if the given position is within the element's content frame.
+	- Required arguments ("argument_name" (argument_value_type): description):
+		- "element" (baseElement*): the target element.
+		- "posX" (float*): the target position on the X axis.
+		- "posY" (float*): the target position on the Y axis.
+	*/
+	bool position_inside_content_frame(std::map<std::string, void*> &args);
+
+	/*
+	- Returns true if the given position is within the element's slot frame.
+	- Required arguments ("argument_name" (argument_value_type): description):
+		- "element" (baseElement*): the target element.
+		- "posX" (float*): the target position on the X axis.
+		- "posY" (float*): the target position on the Y axis.
+	*/
+	bool position_inside_slot_frame(std::map<std::string, void*> &args);
+
 };
+
 
 #endif
 

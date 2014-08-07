@@ -1,3 +1,19 @@
+/*
+|------------------------------------------------------------------------------|
+|                                SFMLLAYOUT.CPP                                |
+|------------------------------------------------------------------------------|
+| - Source file with the implementations of the classes and methods declared   |
+| in the header file 'SFMLLayout.hpp'.                                         |
+| - This part of the code corresponds to those classes reliant on resources    |
+| and functionality imported from SFML.                                        |
+|------------------------------------------------------------------------------|
+| AUTHOR: Sergi Salvador Lozano.                                               |
+| FIRST CREATED: 2014/06/01.                                                   |
+| LAST UPDATED: 2014/08/07.                                                    |
+|------------------------------------------------------------------------------|
+*/
+
+
 #include "SFMLLayout.hpp"
 
 using namespace LAYOUT;
@@ -472,11 +488,7 @@ spriteElement::spriteElement(sf::Sprite* content, std::string name,
 	float contentPosX, float contentPosY, float contentWidth,
 	float contentHeight, float slotPosX, float slotPosY, float slotWidth,
 	float slotHeight, int alignmentX, int alignmentY, int depth, bool visible,
-	bool contentVisible,
-	void (*onContentClick)(std::map<std::string, std::string>&),
-	void (*onSlotClick)(std::map<std::string, std::string>&),
-	void (*onContentHover)(std::map<std::string, std::string>&),
-	void (*onSlotHover)(std::map<std::string, std::string>&),
+	bool contentVisible, std::map<std::string, event*> &events,
 	sf::RenderWindow* drawingWindow, sf::Sprite* background,
 	int backgroundModeX, int backgroundModeY, int backgroundAlignmentX,
 	int backgroundAlignmentY, bool backgroundVisible, int spriteModeX,
@@ -489,8 +501,7 @@ spriteElement::spriteElement(sf::Sprite* content, std::string name,
 	// also be called here (or it wouldn't be called).
 	baseElement(name, contentPosX, contentPosY, contentWidth,
 	contentHeight, slotPosX, slotPosY, slotWidth, slotHeight, alignmentX,
-	alignmentY, depth, visible, contentVisible, onContentClick, onSlotClick,
-	onContentHover, onSlotHover)
+	alignmentY, depth, visible, contentVisible, events)
 {
 	if (spriteModeX != DRAW::crop && spriteModeX != DRAW::adjust &&
 		spriteModeX != DRAW::repeat)
@@ -658,14 +669,10 @@ freeLayout::freeLayout(std::string name, float contentPosX, float contentPosY,
 	float contentWidth, float contentHeight, float slotPosX, float slotPosY,
 	float slotWidth, float slotHeight, int alignmentX, int alignmentY,
 	int depth, bool visible, bool contentVisible,
-	void (*onContentClick)(std::map<std::string, std::string>&),
-	void (*onSlotClick)(std::map<std::string, std::string>&),
-	void (*onContentHover)(std::map<std::string, std::string>&),
-	void (*onSlotHover)(std::map<std::string, std::string>&),
-	int size, int defaultAlignmentX, int defaultAlignmentY, bool elastic,
-	sf::RenderWindow* drawingWindow, sf::Sprite* background,
-	int backgroundModeX, int backgroundModeY, int backgroundAlignmentX,
-	int backgroundAlignmentY, bool backgroundVisible)
+	std::map<std::string, event*> &events, int size, int defaultAlignmentX,
+	int defaultAlignmentY, bool elastic, sf::RenderWindow* drawingWindow,
+	sf::Sprite* background, int backgroundModeX, int backgroundModeY,
+	int backgroundAlignmentX, int backgroundAlignmentY, bool backgroundVisible)
 	// The constructor of 'baseFreeLayout' is called in order to to initialise
 	// its attributes.
 	: baseFreeLayout(size, defaultAlignmentX, defaultAlignmentY, elastic),
@@ -677,8 +684,7 @@ freeLayout::freeLayout(std::string name, float contentPosX, float contentPosY,
 	// its constructor must also be called here (or it wouldn't be called).
 	baseElement(name, contentPosX, contentPosY, contentWidth, contentHeight,
 	slotPosX, slotPosY, slotWidth, slotHeight, alignmentX, alignmentY, depth,
-	visible, contentVisible, onContentClick, onSlotClick, onContentHover,
-	onSlotHover)
+	visible, contentVisible, events)
 {
 }
 
@@ -786,22 +792,18 @@ horizontalLayout::horizontalLayout(std::string name, float contentPosX,
 	float contentPosY, float contentWidth, float contentHeight, float slotPosX,
 	float slotPosY, float slotWidth, float slotHeight, int alignmentX,
 	int alignmentY, int depth, bool visible, bool contentVisible,
-	void (*onContentClick)(std::map<std::string, std::string>&),
-	void (*onSlotClick)(std::map<std::string, std::string>&),
-	void (*onContentHover)(std::map<std::string, std::string>&),
-	void (*onSlotHover)(std::map<std::string, std::string>&),
-	int size, int defaultAlignmentX, int defaultAlignmentY, bool elastic,
-	sf::RenderWindow* drawingWindow, sf::Sprite* background,
-	int backgroundModeX, int backgroundModeY, int backgroundAlignmentX,
-	int backgroundAlignmentY, bool backgroundVisible)
+	std::map<std::string, event*> &events, int size, int defaultAlignmentX,
+	int defaultAlignmentY, bool elastic, sf::RenderWindow* drawingWindow,
+	sf::Sprite* background, int backgroundModeX, int backgroundModeY,
+	int backgroundAlignmentX, int backgroundAlignmentY, bool backgroundVisible)
 	// The constructor of 'freeLayout' is called in order to initialise its
 	// attributes.
 	: freeLayout(name, contentPosX, contentPosY, contentWidth,
 	contentHeight, slotPosX, slotPosY, slotWidth, slotHeight, alignmentX,
-	alignmentY, depth, visible, contentVisible, onContentClick, onSlotClick,
-	onContentHover, onSlotHover, size, defaultAlignmentX, defaultAlignmentY,
-	elastic, drawingWindow, background, backgroundModeX, backgroundModeY,
-	backgroundAlignmentX, backgroundAlignmentY, backgroundVisible),
+	alignmentY, depth, visible, contentVisible, events, size, defaultAlignmentX,
+	defaultAlignmentY, elastic, drawingWindow, background, backgroundModeX,
+	backgroundModeY, backgroundAlignmentX, backgroundAlignmentY,
+	backgroundVisible),
 	// 'freeLayout' and 'baseHorizontalLayout' inherit from 'baseFreeLayout'
 	// virtually, so its constructor must also be called here (or it wouldn't be
 	// called).
@@ -810,8 +812,7 @@ horizontalLayout::horizontalLayout(std::string name, float contentPosX,
 	// so its constructor must also be called here (or it wouldn't be called).
 	baseElement(name, contentPosX, contentPosY, contentWidth, contentHeight,
 	slotPosX, slotPosY, slotWidth, slotHeight, alignmentX, alignmentY, depth,
-	visible, contentVisible, onContentClick, onSlotClick, onContentHover,
-	onSlotHover)
+	visible, contentVisible, events)
 {
 }
 
@@ -850,22 +851,18 @@ verticalLayout::verticalLayout(std::string name, float contentPosX,
 	float contentPosY, float contentWidth, float contentHeight, float slotPosX,
 	float slotPosY, float slotWidth, float slotHeight, int alignmentX,
 	int alignmentY, int depth, bool visible, bool contentVisible,
-	void (*onContentClick)(std::map<std::string, std::string>&),
-	void (*onSlotClick)(std::map<std::string, std::string>&),
-	void (*onContentHover)(std::map<std::string, std::string>&),
-	void (*onSlotHover)(std::map<std::string, std::string>&),
-	int size, int defaultAlignmentX, int defaultAlignmentY, bool elastic,
-	sf::RenderWindow* drawingWindow, sf::Sprite* background,
-	int backgroundModeX, int backgroundModeY, int backgroundAlignmentX,
-	int backgroundAlignmentY, bool backgroundVisible)
+	std::map<std::string, event*> &events, int size, int defaultAlignmentX,
+	int defaultAlignmentY, bool elastic, sf::RenderWindow* drawingWindow,
+	sf::Sprite* background, int backgroundModeX, int backgroundModeY,
+	int backgroundAlignmentX, int backgroundAlignmentY, bool backgroundVisible)
 	// The constructor of 'freeLayout' is called in order to initialise its
 	// attributes.
 	: freeLayout(name, contentPosX, contentPosY, contentWidth,
 	contentHeight, slotPosX, slotPosY, slotWidth, slotHeight, alignmentX,
-	alignmentY, depth, visible, contentVisible, onContentClick, onSlotClick,
-	onContentHover, onSlotHover, size, defaultAlignmentX, defaultAlignmentY,
-	elastic, drawingWindow, background, backgroundModeX, backgroundModeY,
-	backgroundAlignmentX, backgroundAlignmentY, backgroundVisible),
+	alignmentY, depth, visible, contentVisible, events, size, defaultAlignmentX,
+	defaultAlignmentY, elastic, drawingWindow, background, backgroundModeX,
+	backgroundModeY, backgroundAlignmentX, backgroundAlignmentY,
+	backgroundVisible),
 	// 'freeLayout' and 'baseVerticalLayout' inherit from 'baseFreeLayout'
 	// virtually, so its constructor must also be called here (or it wouldn't be
 	// called).
@@ -874,8 +871,7 @@ verticalLayout::verticalLayout(std::string name, float contentPosX,
 	// so its constructor must also be called here (or it wouldn't be called).
 	baseElement(name, contentPosX, contentPosY, contentWidth, contentHeight,
 	slotPosX, slotPosY, slotWidth, slotHeight, alignmentX, alignmentY, depth,
-	visible, contentVisible, onContentClick, onSlotClick, onContentHover,
-	onSlotHover)
+	visible, contentVisible, events)
 {
 }
 
@@ -914,14 +910,11 @@ tableLayout::tableLayout(std::string name, float contentPosX,
 	float contentPosY, float contentWidth, float contentHeight, float slotPosX,
 	float slotPosY, float slotWidth, float slotHeight, int alignmentX,
 	int alignmentY, int depth, bool visible, bool contentVisible,
-	void (*onContentClick)(std::map<std::string, std::string>&),
-	void (*onSlotClick)(std::map<std::string, std::string>&),
-	void (*onContentHover)(std::map<std::string, std::string>&),
-	void (*onSlotHover)(std::map<std::string, std::string>&),
-	int numberOfRows, int numberOfColumns, int defaultAlignmentX, 
-	int defaultAlignmentY, sf::RenderWindow* drawingWindow,
-	sf::Sprite* background, int backgroundModeX, int backgroundModeY,
-	int backgroundAlignmentX, int backgroundAlignmentY, bool backgroundVisible)
+	std::map<std::string, event*> &events, int numberOfRows,
+	int numberOfColumns, int defaultAlignmentX,  int defaultAlignmentY,
+	sf::RenderWindow* drawingWindow, sf::Sprite* background,
+	int backgroundModeX, int backgroundModeY, int backgroundAlignmentX,
+	int backgroundAlignmentY, bool backgroundVisible)
 	// The constructor of 'baseTableLayout' is called in order to initialise its
 	// attributes.
 	: baseTableLayout(numberOfRows, numberOfColumns),
@@ -929,11 +922,10 @@ tableLayout::tableLayout(std::string name, float contentPosX,
 	// attributes.
 	freeLayout(name, contentPosX, contentPosY, contentWidth,
 	contentHeight, slotPosX, slotPosY, slotWidth, slotHeight, alignmentX,
-	alignmentY, depth, visible, contentVisible, onContentClick, onSlotClick,
-	onContentHover, onSlotHover, numberOfRows * numberOfColumns,
-	defaultAlignmentX, defaultAlignmentY, false, drawingWindow, background,
-	backgroundModeX, backgroundModeY, backgroundAlignmentX,
-	backgroundAlignmentY, backgroundVisible),
+	alignmentY, depth, visible, contentVisible, events,
+	numberOfRows * numberOfColumns, defaultAlignmentX, defaultAlignmentY, false,
+	drawingWindow, background, backgroundModeX, backgroundModeY,
+	backgroundAlignmentX, backgroundAlignmentY, backgroundVisible),
 	// 'freeLayout' and 'baseTableLayout' inherit from 'baseFreeLayout'
 	// virtually, so its constructor must also be called here (or it wouldn't be
 	// called).
@@ -943,8 +935,7 @@ tableLayout::tableLayout(std::string name, float contentPosX,
 	// so its constructor must also be called here (or it wouldn't be called).
 	baseElement(name, contentPosX, contentPosY, contentWidth, contentHeight,
 	slotPosX, slotPosY, slotWidth, slotHeight, alignmentX, alignmentY, depth,
-	visible, contentVisible, onContentClick, onSlotClick, onContentHover,
-	onSlotHover)
+	visible, contentVisible, events)
 {
 }
 

@@ -1,3 +1,19 @@
+/*
+|------------------------------------------------------------------------------|
+|                                  LAYOUT.CPP                                  |
+|------------------------------------------------------------------------------|
+| - Source file with the implementations of the classes and methods declared   |
+| in the header file 'layout.hpp'.                                             |
+| - This part of the code corresponds to the base classes containing most of   |
+| the logic and functionality independent from specific graphic libraries.     |
+|------------------------------------------------------------------------------|
+| AUTHOR: Sergi Salvador Lozano.                                               |
+| FIRST CREATED: 2014/06/01.                                                   |
+| LAST UPDATED: 2014/08/07.                                                    |
+|------------------------------------------------------------------------------|
+*/
+
+
 #include "layout.hpp"
 
 using namespace LAYOUT;
@@ -13,10 +29,7 @@ baseElement::baseElement(std::string name, float contentPosX, float contentPosY,
 	float contentWidth, float contentHeight, float slotPosX, float slotPosY,
 	float slotWidth, float slotHeight, int alignmentX, int alignmentY,
 	int depth, bool visible, bool contentVisible,
-	void (*onContentClick)(std::map<std::string, std::string>&),
-	void (*onSlotClick)(std::map<std::string, std::string>&),
-	void (*onContentHover)(std::map<std::string, std::string>&),
-	void (*onSlotHover)(std::map<std::string, std::string>&))
+	std::map<std::string, event*> &events)
 {
 	if (contentWidth < 0)
 		contentWidth = 0;
@@ -50,10 +63,8 @@ baseElement::baseElement(std::string name, float contentPosX, float contentPosY,
 	this->depth = depth;
 	this->visible = visible;
 	this->contentVisible = contentVisible;
-	this->onContentClick = onContentClick;
-	this->onSlotClick = onSlotClick;
-	this->onContentHover = onContentHover;
-	this->onSlotHover = onSlotHover;
+	this->events =
+		std::map<std::string, event*>::map<std::string, event*>(events);
 	align();
 }
 
@@ -162,6 +173,22 @@ bool baseElement::get_visibility()
 bool baseElement::get_content_visibility()
 {
 	return contentVisible;
+}
+
+
+std::map<std::string, event*>& baseElement::get_events()
+{
+	return events;
+}
+
+
+event* baseElement::find_event(std::string eventName)
+{
+	std::map<std::string, event*>::iterator it = events.find(eventName);
+	if (it != events.end())
+		return it->second;
+	else
+		return 0;
 }
 
 
@@ -319,6 +346,25 @@ void baseElement::set_content_visibility(bool contentVisible)
 }
 
 
+void baseElement::set_events(std::map<std::string, event*> &events)
+{
+	this->events =
+		std::map<std::string, event*>::map<std::string, event*>(events);
+}
+
+
+void baseElement::add_event(std::string eventName, event &e)
+{
+	events[eventName] = &e;
+}
+
+
+void baseElement::remove_event(std::string eventName)
+{
+	events.erase(eventName);
+}
+
+
 void baseElement::copy(baseElement &element)
 {
 	element.name = name;
@@ -335,10 +381,8 @@ void baseElement::copy(baseElement &element)
 	element.depth = depth;
 	element.visible = visible;
 	element.contentVisible = contentVisible;
-	element.onContentClick = onContentClick;
-	element.onSlotClick = onSlotClick;
-	element.onContentHover = onContentHover;
-	element.onSlotHover = onSlotHover;
+	element.events =
+		std::map<std::string, event*>::map<std::string, event*>(events);
 }
 
 
@@ -452,70 +496,127 @@ void elementHandler::r_remove_element(baseElement &element)
 }
 
 
-void elementHandler::click(float cursorPosX, float cursorPosY)
+void elementHandler::activate_events(std::string eventName,
+	std::map<std::string, void*> &conditionArgs,
+	std::map<std::string, void*> &effectArgs)
 {
-
 	for (std::map<int, baseElement*>::iterator it = idMap.begin() ;
 		it != idMap.end() ; it ++)
-	{
-		baseElement* elem = it->second;
-		if (cursorPosX >= elem->get_slot_position_x() &&
-			cursorPosY >= elem->get_slot_position_y() &&
-			cursorPosX <= elem->get_slot_position_x() + elem->get_slot_width()
-			&& cursorPosY <= elem->get_slot_position_y() +
-			elem->get_slot_height() && elem->onSlotClick)
-		{
-			// Mouse cursor is within the slot bounds.
-			elem->onSlotClickArgs["cursorPosX"] = std::to_string(cursorPosX);
-			elem->onSlotClickArgs["cursorPosY"] = std::to_string(cursorPosY);
-			elem->onSlotClick(elem->onSlotClickArgs);
-		}
-		if (cursorPosX >= elem->get_content_position_x() &&
-			cursorPosY >= elem->get_content_position_y() &&
-			cursorPosX <= elem->get_content_position_x() +
-			elem->get_content_width() && cursorPosY <=
-			elem->get_content_position_y() + elem->get_content_height()
-			&& elem->onContentClick)
-		{
-			// Mouse cursor is within the content bounds.
-			elem->onContentClickArgs["cursorPosX"] = std::to_string(cursorPosX);
-			elem->onContentClickArgs["cursorPosY"] = std::to_string(cursorPosY);
-			elem->onContentClick(elem->onContentClickArgs);
-		}
-	}
+		if (event *e = it->second->find_event(eventName))
+			// There is an event in the element with the given name.
+			e->activate(conditionArgs, effectArgs);
 }
 
 
-void elementHandler::hover(float cursorPosX, float cursorPosY)
+/* CLASS event */
+
+
+event::event(eventConditionType eventCondition, eventEffectType eventEffect,
+	std::map<std::string, void*> &defaultConditionArgs,
+	std::map<std::string, void*> &defaultEffectArgs)
 {
-	for (std::map<int, baseElement*>::iterator it = idMap.begin() ;
-		it != idMap.end() ; it ++)
-	{
-		baseElement* elem = it->second;
-		if (cursorPosX >= elem->get_slot_position_x() &&
-			cursorPosY >= elem->get_slot_position_y() &&
-			cursorPosX <= elem->get_slot_position_x() + elem->get_slot_width()
-			&& cursorPosY <= elem->get_slot_position_y() +
-			elem->get_slot_height() && elem->onSlotHover)
-		{
-			// Mouse cursor is within the slot bounds.
-			elem->onSlotHoverArgs["cursorPosX"] = std::to_string(cursorPosX);
-			elem->onSlotHoverArgs["cursorPosY"] = std::to_string(cursorPosY);
-			elem->onSlotHover(elem->onSlotHoverArgs);
-		}
-		if (cursorPosX >= elem->get_content_position_x() &&
-			cursorPosY >= elem->get_content_position_y() &&
-			cursorPosX <= elem->get_content_position_x() +
-			elem->get_content_width() && cursorPosY <=
-			elem->get_content_position_y() + elem->get_content_height()
-			&& elem->onContentHover)
-		{
-			// Mouse cursor is within the content bounds.
-			elem->onContentHoverArgs["cursorPosX"] = std::to_string(cursorPosX);
-			elem->onContentHoverArgs["cursorPosY"] = std::to_string(cursorPosY);
-			elem->onContentHover(elem->onContentHoverArgs);
-		}
-	}
+	this->eventCondition = eventCondition;
+	this->eventEffect = eventEffect;
+	this->defaultConditionArgs =
+		std::map<std::string, void*>::map<std::string, void*>(
+		defaultConditionArgs);
+	this->defaultEffectArgs =
+		std::map<std::string, void*>::map<std::string, void*>(
+		defaultEffectArgs);
+}
+
+
+event::eventConditionType event::get_event_condition()
+{
+	return eventCondition;
+}
+
+
+event::eventEffectType event::get_event_effect()
+{
+	return eventEffect;
+}
+
+
+std::map<std::string, void*>& event::get_default_condition_args()
+{
+	return defaultConditionArgs;
+}
+
+
+std::map<std::string, void*>& event::get_default_effect_args()
+{
+	return defaultEffectArgs;
+}
+
+
+void event::set_event_condition(eventConditionType eventCondition)
+{
+	this->eventCondition = eventCondition;
+}
+
+
+void event::set_event_effect(eventEffectType eventEffect)
+{
+	this->eventEffect = eventEffect;
+}
+
+
+void event::set_default_condition_args(
+	std::map<std::string, void*> &defaultConditionArgs)
+{
+	this->defaultConditionArgs =
+		std::map<std::string, void*>::map<std::string, void*>(
+		defaultConditionArgs);
+}
+
+
+void event::set_default_effect_args(
+	std::map<std::string, void*> &defaultConditionArgs)
+{
+	this->defaultEffectArgs =
+		std::map<std::string, void*>::map<std::string, void*>(
+		defaultEffectArgs);
+}
+
+
+void event::add_default_condition_argument(std::string argName, void *argValue)
+{
+	defaultConditionArgs[argName] = argValue;
+}
+
+
+void event::add_default_effect_argument(std::string argName, void *argValue)
+{
+	defaultEffectArgs[argName] = argValue;
+}
+
+
+void event::remove_default_condition_argument(std::string argName)
+{
+	defaultConditionArgs.erase(argName);
+}
+
+
+void event::remove_default_effect_argument(std::string argName)
+{
+	defaultEffectArgs.erase(argName);
+}
+
+
+void event::activate(std::map<std::string, void*> &conditionArgs,
+	std::map<std::string, void*> &effectArgs)
+{
+	std::map<std::string, void*> conArgs =
+		std::map<std::string, void*>(conditionArgs);
+	conArgs.insert(defaultConditionArgs.begin(), defaultConditionArgs.end());
+
+	std::map<std::string, void*> effArgs =
+		std::map<std::string, void*>(effectArgs);
+	effArgs.insert(defaultEffectArgs.begin(), defaultEffectArgs.end());
+
+	if (eventEffect && (!eventCondition || eventCondition(conArgs)))
+		eventEffect(effArgs);
 }
 
 
@@ -1075,4 +1176,46 @@ baseElement* baseTableLayout::remove_element(int row, int column)
 		column < numberOfColumns)
 		e = baseFreeLayout::remove_element(row * numberOfColumns + column);
 	return e;
+}
+
+
+bool LAYOUT::position_inside_content_frame(std::map<std::string, void*> &args)
+{
+	std::map<std::string, void*>::iterator it1 = args.find("element");
+	std::map<std::string, void*>::iterator it2 = args.find("posX");
+	std::map<std::string, void*>::iterator it3 = args.find("posY");
+	if (it1 != args.end() && it2 != args.end() && it3 != args.end())
+	{
+		baseElement *elem = static_cast<baseElement*>(it1->second);
+		float *posX = static_cast<float*>(it2->second);
+		float *posY = static_cast<float*>(it3->second);
+		if (*posX >= elem->get_content_position_x() &&
+			*posX <= elem->get_content_position_x() + elem->get_content_width()
+			&& *posY >= elem->get_content_position_y() && *posY <=
+			elem->get_content_position_y() + elem->get_content_height())
+			// The position (posX, posY) is inside the element's content frame.
+			return true;
+	}
+	return false;
+}
+
+
+bool LAYOUT::position_inside_slot_frame(std::map<std::string, void*> &args)
+{
+	std::map<std::string, void*>::iterator it1 = args.find("element");
+	std::map<std::string, void*>::iterator it2 = args.find("posX");
+	std::map<std::string, void*>::iterator it3 = args.find("posY");
+	if (it1 != args.end() && it2 != args.end() && it3 != args.end())
+	{
+		baseElement *elem = static_cast<baseElement*>(it1->second);
+		float *posX = static_cast<float*>(it2->second);
+		float *posY = static_cast<float*>(it3->second);
+		if (*posX >= elem->get_slot_position_x() &&
+			*posX <= elem->get_slot_position_x() + elem->get_slot_width() &&
+			*posY >= elem->get_slot_position_y() &&
+			*posY <= elem->get_slot_position_y() + elem->get_slot_height())
+			// The position (posX, posY) is inside the element's slot frame.
+			return true;
+	}
+	return false;
 }
