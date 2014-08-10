@@ -9,7 +9,7 @@
 |------------------------------------------------------------------------------|
 | AUTHOR: Sergi Salvador Lozano.                                               |
 | FIRST CREATED: 2014/06/01.                                                   |
-| LAST UPDATED: 2014/08/07.                                                    |
+| LAST UPDATED: 2014/08/10.                                                    |
 |------------------------------------------------------------------------------|
 */
 
@@ -29,19 +29,19 @@ namespace LAYOUT
 	- Possible values for sprites' drawing modes.
 	- All three are viable options for both axis.
 	*/
-	namespace DRAW
+	enum DRAWMODE
 	{
 		/*
 		- The sprite will be drawn in its original scale, but will be cropped
 		if it exceeds the slot.
 		*/
-		const int crop = 0;
+		crop,
 
 		/*
 		- The size of the sprite will be adjusted so that it fills the slot
 		exactly.
 		*/
-		const int adjust = 1;
+		adjust,
 
 		/*
 		- The sprite will be drawn in its original scale consecutively as many
@@ -50,7 +50,7 @@ namespace LAYOUT
 		sprite as a reference.
 		- Border rows and columns will be cropped if they trespass slot limits.
 		*/
-		const int repeat = 2;
+		repeat
 	};
 
 
@@ -72,35 +72,33 @@ namespace LAYOUT
 		/*
 		- This sprite will be drawn before the element's content, on the slot
 		frame, according to the specified mode.
-		- A background sprite MUSTN'T have a rotation component.
+		- A background sprite MUST NOT have a rotation component.
 		*/
 		sf::Sprite* background;
 
 		/*
 		- Determines how the background will be drawn on the X axis.
-		- Valid values are 'DRAW::crop', 'DRAW::adjust', and 'DRAW::repeat'.
+		- Valid values are 'crop', 'adjust', and 'repeat'.
 		*/
-		int backgroundModeX;
+		DRAWMODE backgroundModeX;
 
 		/*
 		- Determines how the background will be drawn on the Y axis.
-		- Valid values are 'DRAW::crop', 'DRAW::adjust', and 'DRAW::repeat'.
+		- Valid values are 'crop', 'adjust', and 'repeat'.
 		*/
-		int backgroundModeY;
+		DRAWMODE backgroundModeY;
 
 		/*
 		- Determines the X alignment of the background in the slot.
-		- Valid values are 'ALIGNMENT::left', 'ALIGNMENT::right', and
-		'ALIGNMENT::center'.
+		- Valid values are 'left', 'right', and 'center'.
 		*/
-		int backgroundAlignmentX;
+		ALIGNMENT backgroundAlignmentX;
 
 		/*
 		- Determines the Y alignment of the background in the slot.
-		- Valid values are 'ALIGNMENT::top', 'ALIGNMENT::bottom', and
-		'ALIGNMENT::center'.
+		- Valid values are 'top', 'bottom', and 'center'.
 		*/
-		int backgroundAlignmentY;
+		ALIGNMENT backgroundAlignmentY;
 
 		/*
 		- A 'false' value prevents the background from being displayed.
@@ -153,8 +151,8 @@ namespace LAYOUT
 		value of the given drawing mode and alignment attributes.
 		*/
 		void drawSprite(sf::Sprite &sprite, float framePosX, float framePosY,
-			float frameWidth, float frameHeight, int drawModeX, int drawModeY,
-			int alignmentX, int alignmentY);
+			float frameWidth, float frameHeight, DRAWMODE drawModeX,
+			DRAWMODE drawModeY, ALIGNMENT alignmentX, ALIGNMENT alignmentY);
 
 	public:
 
@@ -162,10 +160,10 @@ namespace LAYOUT
 		- Default constructor.
 		*/
 		element(sf::RenderWindow* drawingWindow = 0, sf::Sprite* background = 0,
-			int backgroundModeX = DRAW::adjust,
-			int backgroundModeY = DRAW::adjust,
-			int backgroundAlignmentX = ALIGNMENT::left,
-			int backgroundAlignmentY = ALIGNMENT::top,
+			DRAWMODE backgroundModeX = adjust,
+			DRAWMODE backgroundModeY = adjust,
+			ALIGNMENT backgroundAlignmentX = left,
+			ALIGNMENT backgroundAlignmentY = top,
 			bool backgroundVisible = true);
 
 		/*
@@ -186,22 +184,22 @@ namespace LAYOUT
 		/*
 		- Returns the value of the attribute 'backgroundModeX'.
 		*/
-		int get_background_mode_x();
+		DRAWMODE get_background_mode_x();
 
 		/*
 		- Returns the value of the attribute 'backgroundModeY'.
 		*/
-		int get_background_mode_y();
+		DRAWMODE get_background_mode_y();
 
 		/*
 		- Returns the value of the attribute 'backgroundAlignmentX'.
 		*/
-		int get_background_alignment_x();
+		ALIGNMENT get_background_alignment_x();
 
 		/*
 		- Returns the value of the attribute 'backgroundAlignmentY'.
 		*/
-		int get_background_alignment_y();
+		ALIGNMENT get_background_alignment_y();
 
 		/*
 		- Returns the attribute 'backgroundVisible'.
@@ -227,33 +225,34 @@ namespace LAYOUT
 		/*
 		- Sets the attribute 'backgroundModeX'.
 		*/
-		void set_background_mode_x(int backgroundModeX);
+		void set_background_mode_x(DRAWMODE backgroundModeX);
 
 		/*
 		- Sets the attribute 'backgroundModeY'.
 		*/
-		void set_background_mode_y(int backgroundModeY);
+		void set_background_mode_y(DRAWMODE backgroundModeY);
 
 		/*
 		- Sets both background mode attributes.
 		*/
-		void set_background_mode(int backgroundModeX, int backgroundModeY);
+		void set_background_mode(DRAWMODE backgroundModeX,
+			DRAWMODE backgroundModeY);
 
 		/*
 		- Sets the attribute 'backgroundAlignmentX'.
 		*/
-		void set_background_alignment_x(int backgroundAlignmentX);
+		void set_background_alignment_x(ALIGNMENT backgroundAlignmentX);
 
 		/*
 		- Sets the attribute 'backgroundAlignmentY'.
 		*/
-		void set_background_alignment_y(int backgroundAlignmentY);
+		void set_background_alignment_y(ALIGNMENT backgroundAlignmentY);
 
 		/*
 		- Sets both background alignment attributes.
 		*/
-		void set_background_alignment(int backgroundAlignmentX,
-			int backgroundAlignmentY);
+		void set_background_alignment(ALIGNMENT backgroundAlignmentX,
+			ALIGNMENT backgroundAlignmentY);
 
 		/*
 		- Sets the attribute 'backgroundVisible'.
@@ -296,29 +295,27 @@ namespace LAYOUT
 
 		/*
 		- Determines how the sprite will be drawn on the X axis.
-		- Valid values are 'DRAW::crop', 'DRAW::adjust', and 'DRAW::repeat'.
+		- Valid values are 'crop', 'adjust', and 'repeat'.
 		*/
-		int spriteModeX;
+		DRAWMODE spriteModeX;
 
 		/*
 		- Determines how the sprite will be drawn on the Y axis.
-		- Valid values are 'DRAW::crop', 'DRAW::adjust', and 'DRAW::repeat'.
+		- Valid values are 'crop', 'adjust', and 'repeat'.
 		*/
-		int spriteModeY;
+		DRAWMODE spriteModeY;
 
 		/*
 		- Determines the alignment in X of the sprite inside the content space.
-		- Valid values are 'ALIGNMENT::left', 'ALIGNMENT::right', and
-		'ALIGNMENT::center'.
+		- Valid values are 'left', 'right', and 'center'.
 		*/
-		int spriteAlignmentX;
+		ALIGNMENT spriteAlignmentX;
 
 		/*
 		- Determines the alignment in Y of the sprite inside the content space.
-		- Valid values are 'ALIGNMENT::top', 'ALIGNMENT::bottom', and
-		'ALIGNMENT::center'.
+		- Valid values are 'top', 'bottom', and 'center'.
 		*/
-		int spriteAlignmentY;
+		ALIGNMENT spriteAlignmentY;
 
 		/*
 		- Draws the content sprite in the drawing window.
@@ -334,20 +331,18 @@ namespace LAYOUT
 			float contentPosX = 0, float contentPosY = 0,
 			float contentWidth = 0, float contentHeight = 0, float slotPosX = 0,
 			float slotPosY = 0, float slotWidth = 0, float slotHeight = 0,
-			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
+			ALIGNMENT alignmentX = none, ALIGNMENT alignmentY = none,
 			int depth = 0, bool visible = true, bool contentVisible = true,
 			std::map<std::string, event*> &events =
 			std::map<std::string, event*>::map<std::string, event*>(),
-			sf::RenderWindow* drawingWindow = 0,
-			sf::Sprite* background = 0,
-			int backgroundModeX = DRAW::adjust,
-			int backgroundModeY = DRAW::adjust,
-			int backgroundAlignmentX = ALIGNMENT::left,
-			int backgroundAlignmentY = ALIGNMENT::top,
-			bool backgroundVisible = true, int spriteModeX = DRAW::adjust,
-			int spriteModeY = DRAW::adjust,
-			int spriteAlignmentX = ALIGNMENT::left,
-			int spriteAlignmentY = ALIGNMENT::top);
+			sf::RenderWindow* drawingWindow = 0, sf::Sprite* background = 0,
+			DRAWMODE backgroundModeX = adjust,
+			DRAWMODE backgroundModeY = adjust,
+			ALIGNMENT backgroundAlignmentX = left,
+			ALIGNMENT backgroundAlignmentY = top, bool backgroundVisible = true,
+			DRAWMODE spriteModeX = adjust, DRAWMODE spriteModeY = adjust,
+			ALIGNMENT spriteAlignmentX = left,
+			ALIGNMENT spriteAlignmentY = top);
 
 		/*
 		- Copy constructor.
@@ -367,22 +362,22 @@ namespace LAYOUT
 		/*
 		- Returns the value of the attribute 'spriteModeX'.
 		*/
-		int get_sprite_mode_x();
+		DRAWMODE get_sprite_mode_x();
 
 		/*
 		- Returns the value of the attribute 'spriteModeY'.
 		*/
-		int get_sprite_mode_y();
+		DRAWMODE get_sprite_mode_y();
 
 		/*
 		- Returns the value of the attribute 'spriteAlignmentX'.
 		*/
-		int get_sprite_alignment_x();
+		ALIGNMENT get_sprite_alignment_x();
 
 		/*
 		- Returns the value of the attribute 'spriteAlignmentY'.
 		*/
-		int get_sprite_alignment_y();
+		ALIGNMENT get_sprite_alignment_y();
 
 		/*
 		- Sets the attribute 'content'.
@@ -392,32 +387,33 @@ namespace LAYOUT
 		/*
 		- Sets the attribute 'spriteModeX'.
 		*/
-		void set_sprite_mode_x(int spriteModeX);
+		void set_sprite_mode_x(DRAWMODE spriteModeX);
 
 		/*
 		- Sets the attribute 'spriteModeY'.
 		*/
-		void set_sprite_mode_y(int spriteModeY);
+		void set_sprite_mode_y(DRAWMODE spriteModeY);
 
 		/*
 		- Sets both sprite mode attributes.
 		*/
-		void set_sprite_mode(int spriteModeX, int spriteModeY);
+		void set_sprite_mode(DRAWMODE spriteModeX, DRAWMODE spriteModeY);
 
 		/*
 		- Sets the attribute 'spriteAlignmentX'.
 		*/
-		void set_sprite_alignment_x(int spriteAlignmentX);
+		void set_sprite_alignment_x(ALIGNMENT spriteAlignmentX);
 
 		/*
 		- Sets the attribute 'spriteAlignmentY'.
 		*/
-		void set_sprite_alignment_y(int spriteAlignmentY);
+		void set_sprite_alignment_y(ALIGNMENT spriteAlignmentY);
 
 		/*
 		- Sets both sprite alignment attributes.
 		*/
-		void set_sprite_alignment(int spriteAlignmentX, int spriteAlignmentY);
+		void set_sprite_alignment(ALIGNMENT spriteAlignmentX,
+			ALIGNMENT spriteAlignmentY);
 
 		/*
 		- Creates a copy of the current element in a new instance.
@@ -459,17 +455,17 @@ namespace LAYOUT
 			float contentPosY = 0, float contentWidth = 0,
 			float contentHeight = 0, float slotPosX = 0, float slotPosY = 0,
 			float slotWidth = 0, float slotHeight = 0,
-			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
+			ALIGNMENT alignmentX = none, ALIGNMENT alignmentY = none,
 			int depth = 0, bool visible = true, bool contentVisible = true,
 			std::map<std::string, event*> &events =
 			std::map<std::string, event*>::map<std::string, event*>(),
-			int size = 0, int defaultAlignmentX = ALIGNMENT::left,
-			int defaultAlignmentY = ALIGNMENT::top, bool elastic = true,
+			int size = 0, ALIGNMENT defaultAlignmentX = left,
+			ALIGNMENT defaultAlignmentY = top, bool elastic = true,
 			sf::RenderWindow* defaultWindow = 0, sf::Sprite* background = 0,
-			int backgroundModeX = DRAW::adjust,
-			int backgroundModeY = DRAW::adjust,
-			int backgroundAlignmentX = ALIGNMENT::left,
-			int backgroundAlignmentY = ALIGNMENT::top,
+			DRAWMODE backgroundModeX = adjust,
+			DRAWMODE backgroundModeY = adjust,
+			ALIGNMENT backgroundAlignmentX = left,
+			ALIGNMENT backgroundAlignmentY = top,
 			bool backgroundVisible = true);
 
 		/*
@@ -584,17 +580,17 @@ namespace LAYOUT
 			float contentPosY = 0, float contentWidth = 0,
 			float contentHeight = 0, float slotPosX = 0, float slotPosY = 0,
 			float slotWidth = 0, float slotHeight = 0,
-			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
+			ALIGNMENT alignmentX = none, ALIGNMENT alignmentY = none,
 			int depth = 0, bool visible = true, bool contentVisible = true,
 			std::map<std::string, event*> &events =
 			std::map<std::string, event*>::map<std::string, event*>(),
-			int size = 0, int defaultAlignmentX = ALIGNMENT::left,
-			int defaultAlignmentY = ALIGNMENT::top, bool elastic = true,
+			int size = 0, ALIGNMENT defaultAlignmentX = left,
+			ALIGNMENT defaultAlignmentY = top, bool elastic = true,
 			sf::RenderWindow* defaultWindow = 0, sf::Sprite* background = 0,
-			int backgroundModeX = DRAW::adjust,
-			int backgroundModeY = DRAW::adjust,
-			int backgroundAlignmentX = ALIGNMENT::left,
-			int backgroundAlignmentY = ALIGNMENT::top,
+			DRAWMODE backgroundModeX = adjust,
+			DRAWMODE backgroundModeY = adjust,
+			ALIGNMENT backgroundAlignmentX = left,
+			ALIGNMENT backgroundAlignmentY = top,
 			bool backgroundVisible = true);
 
 		/*
@@ -635,17 +631,17 @@ namespace LAYOUT
 			float contentPosY = 0, float contentWidth = 0,
 			float contentHeight = 0, float slotPosX = 0, float slotPosY = 0,
 			float slotWidth = 0, float slotHeight = 0,
-			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
+			ALIGNMENT alignmentX = none, ALIGNMENT alignmentY = none,
 			int depth = 0, bool visible = true, bool contentVisible = true,
 			std::map<std::string, event*> &events =
 			std::map<std::string, event*>::map<std::string, event*>(),
-			int size = 0, int defaultAlignmentX = ALIGNMENT::left,
-			int defaultAlignmentY = ALIGNMENT::top, bool elastic = true,
+			int size = 0, ALIGNMENT defaultAlignmentX = left,
+			ALIGNMENT defaultAlignmentY = top, bool elastic = true,
 			sf::RenderWindow* defaultWindow = 0, sf::Sprite* background = 0,
-			int backgroundModeX = DRAW::adjust,
-			int backgroundModeY = DRAW::adjust,
-			int backgroundAlignmentX = ALIGNMENT::left,
-			int backgroundAlignmentY = ALIGNMENT::top,
+			DRAWMODE backgroundModeX = adjust,
+			DRAWMODE backgroundModeY = adjust,
+			ALIGNMENT backgroundAlignmentX = left,
+			ALIGNMENT backgroundAlignmentY = top,
 			bool backgroundVisible = true);
 
 		/*
@@ -693,18 +689,18 @@ namespace LAYOUT
 			float contentPosY = 0, float contentWidth = 0,
 			float contentHeight = 0, float slotPosX = 0, float slotPosY = 0,
 			float slotWidth = 0, float slotHeight = 0,
-			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
+			ALIGNMENT alignmentX = none, ALIGNMENT alignmentY = none,
 			int depth = 0, bool visible = true, bool contentVisible = true,
 			std::map<std::string, event*> &events =
 			std::map<std::string, event*>::map<std::string, event*>(),
 			int numberOfRows = 0, int numberOfColumns = 0,
-			int defaultAlignmentX = ALIGNMENT::left,
-			int defaultAlignmentY = ALIGNMENT::top,
+			ALIGNMENT defaultAlignmentX = left,
+			ALIGNMENT defaultAlignmentY = top,
 			sf::RenderWindow* defaultWindow = 0, sf::Sprite* background = 0,
-			int backgroundModeX = DRAW::adjust,
-			int backgroundModeY = DRAW::adjust,
-			int backgroundAlignmentX = ALIGNMENT::left,
-			int backgroundAlignmentY = ALIGNMENT::top,
+			DRAWMODE backgroundModeX = adjust,
+			DRAWMODE backgroundModeY = adjust,
+			ALIGNMENT backgroundAlignmentX = left,
+			ALIGNMENT backgroundAlignmentY = top,
 			bool backgroundVisible = true);
 
 		/*

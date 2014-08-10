@@ -1,0 +1,13 @@
+----------
+
+v1.0.1
+
+GENERAL
+
+- Changed ALIGNMENT and DRAWMODE constants from 'int' to dedicated 'enum' types (with those same names). They are no longer declared in their own namespace.
+
+EXAMPLE
+
+- Changed texture paths for assets from Windows style to Unix style (which works on Windows, too). It's no longer necessary to change them depending on the system.
+
+----------

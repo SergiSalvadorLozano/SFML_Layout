@@ -9,7 +9,7 @@
 |------------------------------------------------------------------------------|
 | AUTHOR: Sergi Salvador Lozano.                                               |
 | FIRST CREATED: 2014/06/01.                                                   |
-| LAST UPDATED: 2014/08/07.                                                    |
+| LAST UPDATED: 2014/08/10.                                                    |
 |------------------------------------------------------------------------------|
 */
 
@@ -18,7 +18,6 @@
 #define LAYOUT_HPP
 
 #include <vector>
-#include <list>
 #include <string>
 #include <map>
 
@@ -28,50 +27,50 @@ namespace LAYOUT
 	/*
 	- Possible values for the alignment attributes in the element class.
 	*/
-	namespace ALIGNMENT
+	enum ALIGNMENT
 	{
 		/*
 		- Possible value for 'alignmentX' and 'alignmentY'.
 		- Content position is unrestricted in that axis.
 		*/
-		const int none = 0;
-		
+		none,
+
 		/*
 		- Possible value for 'alignmentX'.
 		- The left content limit must coincide with the left slot limit.
 		*/
-		const int left = 1;
-		
+		left,
+
 		/*
 		- Possible value for 'alignmentX'.
 		- The right content limit must coincide with the right slot limit.
 		*/
-		const int right = 2;
+		right,
 
 		/*
 		- Possible value for 'alignmentY'.
 		- The top content limit must coincide with the top slot limit.
 		*/
-		const int top = 3;
-		
+		top,
+
 		/*
 		- Possible value for 'alignmentY'.
 		- The bottom content limit must coincide with the bottom slot limit.
 		*/
-		const int bottom = 4;
-		
+		bottom,
+
 		/*
 		- Possible value for 'alignmentX' and 'alignmentY'.
 		- Content limits must keep the same distance to their respective slot
 		limits on that axis.
 		*/
-		const int center = 5;
+		center,
 
 		/*
-		- Valid argument for some methods that change elements' alignment.
+		- Valid argument for some methods that change an elements' alignment.
 		- It causes alignment on that axis to remain unchanged.
 		*/
-		const int keep = 6;
+		keep
 	};
 
 
@@ -172,17 +171,15 @@ namespace LAYOUT
 
 		/*
 		- How the content is to be positioned inside the slot on the X axis.
-		- Valid values are 'ALIGNMENT::none', 'ALIGNMENT::left',
-		'ALIGNMENT::right', and 'ALIGNMENT::center'.
+		- Valid values are 'none', 'left', 'right', and 'center'.
 		*/
-		int alignmentX;
+		ALIGNMENT alignmentX;
 
 		/*
 		- How the content is to be positioned inside the slot on the Y axis.
-		- Valid values are 'ALIGNMENT::none', 'ALIGNMENT::top',
-		'ALIGNMENT::bottom', and 'ALIGNMENT::center'.
+		- Valid values are 'none', 'top', 'bottom', and 'center'.
 		*/
-		int alignmentY;
+		ALIGNMENT alignmentY;
 
 		/*
 		- Depth of the element relative to other elements in the same layout.
@@ -225,7 +222,7 @@ namespace LAYOUT
 			float contentPosY = 0, float contentWidth = 0,
 			float contentHeight = 0, float slotPosX = 0, float slotPosY = 0,
 			float slotWidth = 0, float slotHeight = 0,
-			int alignmentX = ALIGNMENT::none, int alignmentY = ALIGNMENT::none,
+			ALIGNMENT alignmentX = none, ALIGNMENT alignmentY = none,
 			int depth = 0, bool visible = true, bool contentVisible = true,
 			std::map<std::string, event*> &events =
 			std::map<std::string, event*>::map<std::string, event*>());
@@ -298,12 +295,12 @@ namespace LAYOUT
 		/*
 		- Returns the value of the attribute 'alignmentX'.
 		*/
-		int get_alignment_x();
+		ALIGNMENT get_alignment_x();
 
 		/*
 		- Returns the value of the attribute 'alignmentY'.
 		*/
-		int get_alignment_y();
+		ALIGNMENT get_alignment_y();
 
 		/*
 		- Returns the value of the attribute 'depth'.
@@ -389,19 +386,19 @@ namespace LAYOUT
 		- Sets the attribute 'alignmentX'.
 		- Invalid values leave it unchanged.
 		*/
-		void set_alignment_x(int alignmentX);
+		void set_alignment_x(ALIGNMENT alignmentX);
 
 		/*
 		- Sets the attribute 'alignmentY'.
 		- Invalid values leave it unchanged.
 		*/
-		void set_alignment_y(int alignmentY);
+		void set_alignment_y(ALIGNMENT alignmentY);
 
 		/*
 		- Sets both alignment attributes.
 		- Invalid values leave alignment on that axis unchanged.
 		*/
-		void set_alignment(int alignmentX, int alignmentY);
+		void set_alignment(ALIGNMENT alignmentX, ALIGNMENT alignmentY);
 
 		/*
 		- Sets the position of the content inside the slot according to
@@ -419,13 +416,13 @@ namespace LAYOUT
 		- Sets both alignment attributes and calls the 'align()' method.
 		- Invalid values align the content according to the existing alignment.
 		*/
-		void align(int alignmentX, int alignmentY);
+		void align(ALIGNMENT alignmentX, ALIGNMENT alignmentY);
 
 		/*
 		- Calls 'align(alignmentX, alignmentY)'.
 		- Can be redefined in derived classes.
 		*/
-		virtual void r_align(int alignmentX, int alignmentY);
+		virtual void r_align(ALIGNMENT alignmentX, ALIGNMENT alignmentY);
 
 		/*
 		- Sets the attribute 'depth'.
@@ -765,19 +762,17 @@ namespace LAYOUT
 
 		/*
 		- Alignment on X of newly added elements will be changed to this value.
-		- Valid values are 'ALIGNMENT::none', 'ALIGNMENT::left',
-		'ALIGNMENT::right', 'ALIGNMENT::center', and 'ALIGNMENT::keep'.
-		- 'ALIGNMENT::keep' causes newly added elements to retain their values.
+		- Valid values are 'none', 'left', 'right', 'center', and 'keep'.
+		- 'keep' causes newly added elements to retain their original values.
 		*/
-		int defaultAlignmentX;
+		ALIGNMENT defaultAlignmentX;
 
 		/*
 		- Alignment on Y of newly added elements will be changed to this value.
-		- Valid values are 'ALIGNMENT::none', 'ALIGNMENT::top',
-		'ALIGNMENT::bottom', 'ALIGNMENT::center', and 'ALIGNMENT::keep'.
-		- 'ALIGNMENT::keep' causes newly added elements to retain their values.
+		- Valid values are 'none', 'top', 'bottom', 'center', and 'keep'.
+		- 'keep' causes newly added elements to retain their original values.
 		*/
-		int defaultAlignmentY;
+		ALIGNMENT defaultAlignmentY;
 		
 		/*
 		- If 'true', adding elements in slots greater than the layout's size
@@ -812,8 +807,8 @@ namespace LAYOUT
 		- Default constructor.
 		- The layout is initially empty.
 		*/
-		baseFreeLayout(int size = 0, int defaultAlignmentX = ALIGNMENT::left,
-			int defaultAlignmentY = ALIGNMENT::top, bool elastic = true);
+		baseFreeLayout(int size = 0, ALIGNMENT defaultAlignmentX = left,
+			ALIGNMENT defaultAlignmentY = top, bool elastic = true);
 
 		/*
 		- Default destructor.
@@ -843,12 +838,12 @@ namespace LAYOUT
 		/*
 		- Returns the value of the attribute 'defaultAlignmentX'.
 		*/
-		int get_default_alignment_x();
+		ALIGNMENT get_default_alignment_x();
 
 		/*
 		- Returns the value of the attribute 'defaultAlignmentY'.
 		*/
-		int get_default_alignment_y();
+		ALIGNMENT get_default_alignment_y();
 
 		/*
 		- Returns the value of the attribute 'elastic'.
@@ -898,19 +893,19 @@ namespace LAYOUT
 		- Sets the attribute 'defaultAlignmentX'.
 		- Invalid values leave it unchanged.
 		*/
-		void set_default_alignment_x(int defaultAlignmentX);
+		void set_default_alignment_x(ALIGNMENT defaultAlignmentX);
 
 		/*
 		- Sets the attribute 'defaultAlignmentY'.
 		- Invalid values leave it unchanged.
 		*/
-		void set_default_alignment_y(int defaultAlignmentY);
+		void set_default_alignment_y(ALIGNMENT defaultAlignmentY);
 
 		/*
 		- Sets the default alignment of the layout for both axis.
 		*/
-		void set_default_alignment(int defaultAlignmentX,
-			int defaultAlignmentY);
+		void set_default_alignment(ALIGNMENT defaultAlignmentX,
+			ALIGNMENT defaultAlignmentY);
 		
 		/*
 		- Sets the attribute 'elastic'.
@@ -939,7 +934,7 @@ namespace LAYOUT
 		- Recursively aligns the layout and every element inside it in
 		accordance to the parameters.
 		*/
-		void r_align(int alignmentX, int alignmentY);
+		void r_align(ALIGNMENT alignmentX, ALIGNMENT alignmentY);
 		
 		/*
 		- Copies the current layout's attributes into the received one.

@@ -9,7 +9,7 @@
 |------------------------------------------------------------------------------|
 | AUTHOR: Sergi Salvador Lozano.                                               |
 | FIRST CREATED: 2014/06/01.                                                   |
-| LAST UPDATED: 2014/08/07.                                                    |
+| LAST UPDATED: 2014/08/10.                                                    |
 |------------------------------------------------------------------------------|
 */
 
@@ -220,24 +220,24 @@ void element::drawRepeatedSprite(sf::Sprite &sourceSprite,
 
 
 void element::drawSprite(sf::Sprite &sprite, float framePosX, float framePosY,
-	float frameWidth, float frameHeight, int drawModeX, int drawModeY,
-	int alignmentX, int alignmentY)
+	float frameWidth, float frameHeight, DRAWMODE drawModeX, DRAWMODE drawModeY,
+	ALIGNMENT alignmentX, ALIGNMENT alignmentY)
 {
 	if (drawingWindow && sprite.getTexture())
 	{
 		sf::Sprite finalSprite(sprite);
 
 		// The sprite is configured on the X axis.
-		if (drawModeX == DRAW::adjust)
+		if (drawModeX == adjust)
 			adjustSpriteX(finalSprite, framePosX, frameWidth);
 		else
 		{
 			sf::FloatRect sprRect = finalSprite.getGlobalBounds();
-			if (alignmentX == ALIGNMENT::left)
+			if (alignmentX == left)
 				sprRect.left = framePosX;
-			else if (alignmentX == ALIGNMENT::right)
+			else if (alignmentX == right)
 				sprRect.left = framePosX + frameWidth - sprRect.width;
-			else if (alignmentX == ALIGNMENT::center)
+			else if (alignmentX == center)
 				sprRect.left = framePosX + (frameWidth - sprRect.width) / 2;
 			finalSprite.setPosition(sprRect.left, sprRect.top);
 
@@ -245,16 +245,16 @@ void element::drawSprite(sf::Sprite &sprite, float framePosX, float framePosY,
 		}
 
 		// The sprite is configured on the Y axis.
-		if (drawModeY == DRAW::adjust)
+		if (drawModeY == adjust)
 			adjustSpriteY(finalSprite, framePosY, frameHeight);
 		else
 		{
 			sf::FloatRect sprRect = finalSprite.getGlobalBounds();
-			if (alignmentY == ALIGNMENT::top)
+			if (alignmentY == top)
 				sprRect.top = framePosY;
-			else if (alignmentY == ALIGNMENT::bottom)
+			else if (alignmentY == bottom)
 				sprRect.top = framePosY + frameHeight - sprRect.height;
-			else if (alignmentY == ALIGNMENT::center)
+			else if (alignmentY == center)
 				sprRect.top = framePosY + (frameHeight - sprRect.height) / 2;
 			finalSprite.setPosition(sprRect.left, sprRect.top);
 
@@ -263,14 +263,13 @@ void element::drawSprite(sf::Sprite &sprite, float framePosX, float framePosY,
 
 		// The sprite is drawn.
 		sf::FloatRect sprRect = finalSprite.getGlobalBounds();
-		if (drawModeX == DRAW::repeat &&
-			drawModeY == DRAW::repeat)
+		if (drawModeX == repeat && drawModeY == repeat)
 			drawRepeatedSprite(finalSprite, framePosX, framePosY, frameWidth,
 				frameHeight);
-		else if (drawModeX == DRAW::repeat)
+		else if (drawModeX == repeat)
 			drawRepeatedSprite(finalSprite, framePosX, sprRect.top, frameWidth,
 				sprRect.height);
-		else if (drawModeY == DRAW::repeat)
+		else if (drawModeY == repeat)
 			drawRepeatedSprite(finalSprite, sprRect.left, framePosY,
 				sprRect.width, frameHeight);
 		else
@@ -280,23 +279,24 @@ void element::drawSprite(sf::Sprite &sprite, float framePosX, float framePosY,
 
 
 element::element(sf::RenderWindow* drawingWindow, sf::Sprite* background,
-	int backgroundModeX, int backgroundModeY, int backgroundAlignmentX,
-	int backgroundAlignmentY, bool backgroundVisible)
+	DRAWMODE backgroundModeX, DRAWMODE backgroundModeY,
+	ALIGNMENT backgroundAlignmentX, ALIGNMENT backgroundAlignmentY,
+	bool backgroundVisible)
 {
-	if (backgroundModeX != DRAW::crop && backgroundModeX != DRAW::adjust &&
-		backgroundModeX != DRAW::repeat)
-		backgroundModeX = DRAW::adjust;
-	if (backgroundModeY != DRAW::crop && backgroundModeY != DRAW::adjust &&
-		backgroundModeY != DRAW::repeat)
-		backgroundModeY = DRAW::adjust;
-	if (backgroundAlignmentX != ALIGNMENT::left &&
-		backgroundAlignmentX != ALIGNMENT::right &&
-		backgroundAlignmentX != ALIGNMENT::center)
-		backgroundAlignmentX = ALIGNMENT::left;
-	if (backgroundAlignmentY != ALIGNMENT::top &&
-		backgroundAlignmentY != ALIGNMENT::bottom &&
-		backgroundAlignmentY != ALIGNMENT::center)
-		backgroundAlignmentY = ALIGNMENT::top;
+	if (backgroundModeX != crop && backgroundModeX != adjust &&
+		backgroundModeX != repeat)
+		backgroundModeX = adjust;
+	if (backgroundModeY != crop && backgroundModeY != adjust &&
+		backgroundModeY != repeat)
+		backgroundModeY = adjust;
+	if (backgroundAlignmentX != left &&
+		backgroundAlignmentX != right &&
+		backgroundAlignmentX != center)
+		backgroundAlignmentX = left;
+	if (backgroundAlignmentY != top &&
+		backgroundAlignmentY != bottom &&
+		backgroundAlignmentY != center)
+		backgroundAlignmentY = top;
 
 	this->drawingWindow = drawingWindow;
 	this->background = background;
@@ -325,25 +325,25 @@ sf::Sprite* element::get_background()
 }
 
 
-int element::get_background_mode_x()
+DRAWMODE element::get_background_mode_x()
 {
 	return backgroundModeX;
 }
 
 
-int element::get_background_mode_y()
+DRAWMODE element::get_background_mode_y()
 {
 	return backgroundModeY;
 }
 
 
-int element::get_background_alignment_x()
+ALIGNMENT element::get_background_alignment_x()
 {
 	return backgroundAlignmentX;
 }
 
 
-int element::get_background_alignment_y()
+ALIGNMENT element::get_background_alignment_y()
 {
 	return backgroundAlignmentY;
 }
@@ -373,61 +373,57 @@ void element::set_background(sf::Sprite &background)
 }
 
 
-void element::set_background_mode_x(int backgroundModeX)
+void element::set_background_mode_x(DRAWMODE backgroundModeX)
 {
-	if (backgroundModeX == DRAW::crop || backgroundModeX == DRAW::adjust ||
-		backgroundModeX == DRAW::repeat)
+	if (backgroundModeX == crop || backgroundModeX == adjust ||
+		backgroundModeX == repeat)
 		this->backgroundModeX = backgroundModeX;
 }
 
 
-void element::set_background_mode_y(int backgroundModeY)
+void element::set_background_mode_y(DRAWMODE backgroundModeY)
 {
-	if (backgroundModeY == DRAW::crop || backgroundModeY == DRAW::adjust ||
-		backgroundModeY == DRAW::repeat)
+	if (backgroundModeY == crop || backgroundModeY == adjust ||
+		backgroundModeY == repeat)
 		this->backgroundModeY = backgroundModeY;
 }
 
 
-void element::set_background_mode(int backgroundModeX, int backgroundModeY)
+void element::set_background_mode(DRAWMODE backgroundModeX, DRAWMODE backgroundModeY)
 {
-	if (backgroundModeX == DRAW::crop || backgroundModeX == DRAW::adjust ||
-		backgroundModeX == DRAW::repeat)
+	if (backgroundModeX == crop || backgroundModeX == adjust ||
+		backgroundModeX == repeat)
 		this->backgroundModeX = backgroundModeX;
-	if (backgroundModeY == DRAW::crop || backgroundModeY == DRAW::adjust ||
-		backgroundModeY == DRAW::repeat)
+	if (backgroundModeY == crop || backgroundModeY == adjust ||
+		backgroundModeY == repeat)
 		this->backgroundModeY = backgroundModeY;
 }
 
 
-void element::set_background_alignment_x(int backgroundAlignmentX)
+void element::set_background_alignment_x(ALIGNMENT backgroundAlignmentX)
 {
-	if (backgroundAlignmentX == ALIGNMENT::left ||
-		backgroundAlignmentX == ALIGNMENT::right ||
-		backgroundAlignmentX == ALIGNMENT::center)
+	if (backgroundAlignmentX == left || backgroundAlignmentX == right ||
+		backgroundAlignmentX == center)
 		this->backgroundAlignmentX = backgroundAlignmentX;
 }
 
 
-void element::set_background_alignment_y(int backgroundAlignmentY)
+void element::set_background_alignment_y(ALIGNMENT backgroundAlignmentY)
 {
-	if (backgroundAlignmentY == ALIGNMENT::top ||
-		backgroundAlignmentY == ALIGNMENT::bottom ||
-		backgroundAlignmentY == ALIGNMENT::center)
+	if (backgroundAlignmentY == top || backgroundAlignmentY == bottom ||
+		backgroundAlignmentY == center)
 		this->backgroundAlignmentY = backgroundAlignmentY;
 }
 
 
-void element::set_background_alignment(int backgroundAlignmentX,
-	int backgroundAlignmentY)
+void element::set_background_alignment(ALIGNMENT backgroundAlignmentX,
+	ALIGNMENT backgroundAlignmentY)
 {
-	if (backgroundAlignmentX == ALIGNMENT::left ||
-		backgroundAlignmentX == ALIGNMENT::right ||
-		backgroundAlignmentX == ALIGNMENT::center)
+	if (backgroundAlignmentX == left || backgroundAlignmentX == right ||
+		backgroundAlignmentX == center)
 		this->backgroundAlignmentX = backgroundAlignmentX;
-	if (backgroundAlignmentY == ALIGNMENT::top ||
-		backgroundAlignmentY == ALIGNMENT::bottom ||
-		backgroundAlignmentY == ALIGNMENT::center)
+	if (backgroundAlignmentY == top || backgroundAlignmentY == bottom ||
+		backgroundAlignmentY == center)
 		this->backgroundAlignmentY = backgroundAlignmentY;
 }
 
@@ -487,12 +483,13 @@ void spriteElement::drawContent()
 spriteElement::spriteElement(sf::Sprite* content, std::string name,
 	float contentPosX, float contentPosY, float contentWidth,
 	float contentHeight, float slotPosX, float slotPosY, float slotWidth,
-	float slotHeight, int alignmentX, int alignmentY, int depth, bool visible,
-	bool contentVisible, std::map<std::string, event*> &events,
+	float slotHeight, ALIGNMENT alignmentX, ALIGNMENT alignmentY, int depth,
+	bool visible, bool contentVisible, std::map<std::string, event*> &events,
 	sf::RenderWindow* drawingWindow, sf::Sprite* background,
-	int backgroundModeX, int backgroundModeY, int backgroundAlignmentX,
-	int backgroundAlignmentY, bool backgroundVisible, int spriteModeX,
-	int spriteModeY, int spriteAlignmentX, int spriteAlignmentY)
+	DRAWMODE backgroundModeX, DRAWMODE backgroundModeY,
+	ALIGNMENT backgroundAlignmentX, ALIGNMENT backgroundAlignmentY,
+	bool backgroundVisible, DRAWMODE spriteModeX, DRAWMODE spriteModeY,
+	ALIGNMENT spriteAlignmentX, ALIGNMENT spriteAlignmentY)
 	// The constructor of 'element' is called in order to initialise its
 	// attributes.
 	: element(drawingWindow, background, backgroundModeX, backgroundModeY,
@@ -503,20 +500,16 @@ spriteElement::spriteElement(sf::Sprite* content, std::string name,
 	contentHeight, slotPosX, slotPosY, slotWidth, slotHeight, alignmentX,
 	alignmentY, depth, visible, contentVisible, events)
 {
-	if (spriteModeX != DRAW::crop && spriteModeX != DRAW::adjust &&
-		spriteModeX != DRAW::repeat)
-		spriteModeX = DRAW::adjust;
-	if (spriteModeY != DRAW::crop && spriteModeY != DRAW::adjust &&
-		spriteModeY != DRAW::repeat)
-		spriteModeY = DRAW::adjust;
-	if (spriteAlignmentX != ALIGNMENT::left &&
-		spriteAlignmentX != ALIGNMENT::right &&
-		spriteAlignmentX != ALIGNMENT::center)
-		spriteAlignmentX = ALIGNMENT::left;
-	if (spriteAlignmentY != ALIGNMENT::top &&
-		spriteAlignmentY != ALIGNMENT::bottom &&
-		spriteAlignmentY != ALIGNMENT::center)
-		spriteAlignmentY = ALIGNMENT::top;
+	if (spriteModeX != crop && spriteModeX != adjust && spriteModeX != repeat)
+		spriteModeX = adjust;
+	if (spriteModeY != crop && spriteModeY != adjust && spriteModeY != repeat)
+		spriteModeY = adjust;
+	if (spriteAlignmentX != left && spriteAlignmentX != right &&
+		spriteAlignmentX != center)
+		spriteAlignmentX = left;
+	if (spriteAlignmentY != top && spriteAlignmentY != bottom &&
+		spriteAlignmentY != center)
+		spriteAlignmentY = top;
 
 	this->content = content;
 	this->spriteModeX = spriteModeX;
@@ -543,25 +536,25 @@ sf::Sprite* spriteElement::get_content()
 }
 
 
-int spriteElement::get_sprite_mode_x()
+DRAWMODE spriteElement::get_sprite_mode_x()
 {
 	return spriteModeX;
 }
 
 
-int spriteElement::get_sprite_mode_y()
+DRAWMODE spriteElement::get_sprite_mode_y()
 {
 	return spriteModeY;
 }
 
 
-int spriteElement::get_sprite_alignment_x()
+ALIGNMENT spriteElement::get_sprite_alignment_x()
 {
 	return spriteAlignmentX;
 }
 
 
-int spriteElement::get_sprite_alignment_y()
+ALIGNMENT spriteElement::get_sprite_alignment_y()
 {
 	return spriteAlignmentY;
 }
@@ -573,61 +566,53 @@ void spriteElement::set_content(sf::Sprite &content)
 }
 
 
-void spriteElement::set_sprite_mode_x(int spriteModeX)
+void spriteElement::set_sprite_mode_x(DRAWMODE spriteModeX)
 {
-	if (spriteModeX == DRAW::crop || spriteModeX == DRAW::adjust ||
-		spriteModeX == DRAW::repeat)
+	if (spriteModeX == crop || spriteModeX == adjust || spriteModeX == repeat)
 		this->spriteModeX = spriteModeX;
 }
 
 
-void spriteElement::set_sprite_mode_y(int spriteModeY)
+void spriteElement::set_sprite_mode_y(DRAWMODE spriteModeY)
 {
-	if (spriteModeY == DRAW::crop || spriteModeY == DRAW::adjust ||
-		spriteModeY == DRAW::repeat)
+	if (spriteModeY == crop || spriteModeY == adjust || spriteModeY == repeat)
 		this->spriteModeY = spriteModeY;
 }
 
 
-void spriteElement::set_sprite_mode(int spriteModeX, int spriteModeY)
+void spriteElement::set_sprite_mode(DRAWMODE spriteModeX, DRAWMODE spriteModeY)
 {
-	if (spriteModeX == DRAW::crop || spriteModeX == DRAW::adjust ||
-		spriteModeX == DRAW::repeat)
+	if (spriteModeX == crop || spriteModeX == adjust || spriteModeX == repeat)
 		this->spriteModeX = spriteModeX;
-	if (spriteModeY == DRAW::crop || spriteModeY == DRAW::adjust ||
-		spriteModeY == DRAW::repeat)
+	if (spriteModeY == crop || spriteModeY == adjust || spriteModeY == repeat)
 		this->spriteModeY = spriteModeY;
 }
 
 
-void spriteElement::set_sprite_alignment_x(int spriteAlignmentX)
+void spriteElement::set_sprite_alignment_x(ALIGNMENT spriteAlignmentX)
 {
-	if (spriteAlignmentX == ALIGNMENT::left ||
-		spriteAlignmentX == ALIGNMENT::right ||
-		spriteAlignmentX == ALIGNMENT::center)
+	if (spriteAlignmentX == left || spriteAlignmentX == right ||
+		spriteAlignmentX == center)
 		this->spriteAlignmentX = spriteAlignmentX;
 }
 
 
-void spriteElement::set_sprite_alignment_y(int spriteAlignmentY)
+void spriteElement::set_sprite_alignment_y(ALIGNMENT spriteAlignmentY)
 {
-	if (spriteAlignmentY == ALIGNMENT::top ||
-		spriteAlignmentY == ALIGNMENT::bottom ||
-		spriteAlignmentY == ALIGNMENT::center)
+	if (spriteAlignmentY == top || spriteAlignmentY == bottom ||
+		spriteAlignmentY == center)
 		this->spriteAlignmentY = spriteAlignmentY;
 }
 
 
-void spriteElement::set_sprite_alignment(int spriteAlignmentX,
-	int spriteAlignmentY)
+void spriteElement::set_sprite_alignment(ALIGNMENT spriteAlignmentX,
+	ALIGNMENT spriteAlignmentY)
 {
-	if (spriteAlignmentX == ALIGNMENT::left ||
-		spriteAlignmentX == ALIGNMENT::right ||
-		spriteAlignmentX == ALIGNMENT::center)
+	if (spriteAlignmentX == left || spriteAlignmentX == right ||
+		spriteAlignmentX == center)
 		this->spriteAlignmentX = spriteAlignmentX;
-	if (spriteAlignmentY == ALIGNMENT::top ||
-		spriteAlignmentY == ALIGNMENT::bottom ||
-		spriteAlignmentY == ALIGNMENT::center)
+	if (spriteAlignmentY == top || spriteAlignmentY == bottom ||
+		spriteAlignmentY == center)
 		this->spriteAlignmentY = spriteAlignmentY;
 }
 
@@ -667,12 +652,14 @@ void spriteElement::r_copy(spriteElement &newElement)
 
 freeLayout::freeLayout(std::string name, float contentPosX, float contentPosY,
 	float contentWidth, float contentHeight, float slotPosX, float slotPosY,
-	float slotWidth, float slotHeight, int alignmentX, int alignmentY,
-	int depth, bool visible, bool contentVisible,
-	std::map<std::string, event*> &events, int size, int defaultAlignmentX,
-	int defaultAlignmentY, bool elastic, sf::RenderWindow* drawingWindow,
-	sf::Sprite* background, int backgroundModeX, int backgroundModeY,
-	int backgroundAlignmentX, int backgroundAlignmentY, bool backgroundVisible)
+	float slotWidth, float slotHeight, ALIGNMENT alignmentX,
+	ALIGNMENT alignmentY, int depth, bool visible, bool contentVisible,
+	std::map<std::string, event*> &events, int size,
+	ALIGNMENT defaultAlignmentX, ALIGNMENT defaultAlignmentY, bool elastic,
+	sf::RenderWindow* drawingWindow, sf::Sprite* background,
+	DRAWMODE backgroundModeX, DRAWMODE backgroundModeY,
+	ALIGNMENT backgroundAlignmentX, ALIGNMENT backgroundAlignmentY,
+	bool backgroundVisible)
 	// The constructor of 'baseFreeLayout' is called in order to to initialise
 	// its attributes.
 	: baseFreeLayout(size, defaultAlignmentX, defaultAlignmentY, elastic),
@@ -790,12 +777,14 @@ void freeLayout::remove_element(element &element)
 
 horizontalLayout::horizontalLayout(std::string name, float contentPosX,
 	float contentPosY, float contentWidth, float contentHeight, float slotPosX,
-	float slotPosY, float slotWidth, float slotHeight, int alignmentX,
-	int alignmentY, int depth, bool visible, bool contentVisible,
-	std::map<std::string, event*> &events, int size, int defaultAlignmentX,
-	int defaultAlignmentY, bool elastic, sf::RenderWindow* drawingWindow,
-	sf::Sprite* background, int backgroundModeX, int backgroundModeY,
-	int backgroundAlignmentX, int backgroundAlignmentY, bool backgroundVisible)
+	float slotPosY, float slotWidth, float slotHeight, ALIGNMENT alignmentX,
+	ALIGNMENT alignmentY, int depth, bool visible, bool contentVisible,
+	std::map<std::string, event*> &events, int size,
+	ALIGNMENT defaultAlignmentX, ALIGNMENT defaultAlignmentY, bool elastic,
+	sf::RenderWindow* drawingWindow, sf::Sprite* background,
+	DRAWMODE backgroundModeX, DRAWMODE backgroundModeY,
+	ALIGNMENT backgroundAlignmentX, ALIGNMENT backgroundAlignmentY,
+	bool backgroundVisible)
 	// The constructor of 'freeLayout' is called in order to initialise its
 	// attributes.
 	: freeLayout(name, contentPosX, contentPosY, contentWidth,
@@ -849,12 +838,14 @@ horizontalLayout* horizontalLayout::r_clone()
 
 verticalLayout::verticalLayout(std::string name, float contentPosX,
 	float contentPosY, float contentWidth, float contentHeight, float slotPosX,
-	float slotPosY, float slotWidth, float slotHeight, int alignmentX,
-	int alignmentY, int depth, bool visible, bool contentVisible,
-	std::map<std::string, event*> &events, int size, int defaultAlignmentX,
-	int defaultAlignmentY, bool elastic, sf::RenderWindow* drawingWindow,
-	sf::Sprite* background, int backgroundModeX, int backgroundModeY,
-	int backgroundAlignmentX, int backgroundAlignmentY, bool backgroundVisible)
+	float slotPosY, float slotWidth, float slotHeight, ALIGNMENT alignmentX,
+	ALIGNMENT alignmentY, int depth, bool visible, bool contentVisible,
+	std::map<std::string, event*> &events, int size,
+	ALIGNMENT defaultAlignmentX, ALIGNMENT defaultAlignmentY, bool elastic,
+	sf::RenderWindow* drawingWindow, sf::Sprite* background,
+	DRAWMODE backgroundModeX, DRAWMODE backgroundModeY,
+	ALIGNMENT backgroundAlignmentX, ALIGNMENT backgroundAlignmentY,
+	bool backgroundVisible)
 	// The constructor of 'freeLayout' is called in order to initialise its
 	// attributes.
 	: freeLayout(name, contentPosX, contentPosY, contentWidth,
@@ -908,13 +899,14 @@ verticalLayout* verticalLayout::r_clone()
 
 tableLayout::tableLayout(std::string name, float contentPosX,
 	float contentPosY, float contentWidth, float contentHeight, float slotPosX,
-	float slotPosY, float slotWidth, float slotHeight, int alignmentX,
-	int alignmentY, int depth, bool visible, bool contentVisible,
+	float slotPosY, float slotWidth, float slotHeight, ALIGNMENT alignmentX,
+	ALIGNMENT alignmentY, int depth, bool visible, bool contentVisible,
 	std::map<std::string, event*> &events, int numberOfRows,
-	int numberOfColumns, int defaultAlignmentX,  int defaultAlignmentY,
-	sf::RenderWindow* drawingWindow, sf::Sprite* background,
-	int backgroundModeX, int backgroundModeY, int backgroundAlignmentX,
-	int backgroundAlignmentY, bool backgroundVisible)
+	int numberOfColumns, ALIGNMENT defaultAlignmentX,
+	ALIGNMENT defaultAlignmentY, sf::RenderWindow* drawingWindow,
+	sf::Sprite* background, DRAWMODE backgroundModeX, DRAWMODE backgroundModeY,
+	ALIGNMENT backgroundAlignmentX, ALIGNMENT backgroundAlignmentY,
+	bool backgroundVisible)
 	// The constructor of 'baseTableLayout' is called in order to initialise its
 	// attributes.
 	: baseTableLayout(numberOfRows, numberOfColumns),

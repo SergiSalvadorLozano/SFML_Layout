@@ -9,13 +9,10 @@
 | button which closes the window and quits the program.                        |
 | - The sources for the borrowed textures used in this example can be found in |
 | the text file "Assets/image_source.txt".                                     |
-| - When loading sprite textures, this program uses Windows paths. If you are  |
-| executing this in a different system you should change them appropriately    |
-| (lines 100-108).                                                             |
 |------------------------------------------------------------------------------|
 | AUTHOR: Sergi Salvador Lozano.                                               |
 | FIRST CREATED: 2014/06/01.                                                   |
-| LAST UPDATED: 2014/08/07.                                                    |
+| LAST UPDATED: 2014/08/10.                                                    |
 |------------------------------------------------------------------------------|
 */
 
@@ -96,16 +93,15 @@ public:
 		this->window = &window;
 
 		// Textures are loaded from image files.
-		// The following paths are formatted with Windows file systems in mind.
-		eyeTextures[0].loadFromFile("Assets\\eye-gray.png");
-		eyeTextures[1].loadFromFile("Assets\\eye-blue.png");
-		eyeTextures[2].loadFromFile("Assets\\eye-green.png");
-		eyeTextures[3].loadFromFile("Assets\\eye-brown.png");
-		blueDotTexture.loadFromFile("Assets\\blue-dot.png");
-		prevTextTexture.loadFromFile("Assets\\previous.png");
-		nextTextTexture.loadFromFile("Assets\\next.png");
-		quitTexture.loadFromFile("Assets\\quit.png");
-		backgroundTexture.loadFromFile("Assets\\background.png");
+		eyeTextures[0].loadFromFile("Assets/eye-gray.png");
+		eyeTextures[1].loadFromFile("Assets/eye-blue.png");
+		eyeTextures[2].loadFromFile("Assets/eye-green.png");
+		eyeTextures[3].loadFromFile("Assets/eye-brown.png");
+		blueDotTexture.loadFromFile("Assets/blue-dot.png");
+		prevTextTexture.loadFromFile("Assets/previous.png");
+		nextTextTexture.loadFromFile("Assets/next.png");
+		quitTexture.loadFromFile("Assets/quit.png");
+		backgroundTexture.loadFromFile("Assets/background.png");
 
 		// Sprites are assigned their corresponding textures.
 		for (int i = 0 ; i < 4 ; i ++)
@@ -118,8 +114,7 @@ public:
 
 		// All layouts are properly hierarchised and configured.
 		outerLayout.set_slot_size(800, 600);
-		outerLayout.set_default_alignment(LAYOUT::ALIGNMENT::center,
-			LAYOUT::ALIGNMENT::center);
+		outerLayout.set_default_alignment(LAYOUT::center, LAYOUT::center);
 		outerLayout.match_content_to_slot();
 		outerLayout.add_element(innerLeftLayout);
 		outerLayout.add_element(eyeElement);
@@ -140,10 +135,9 @@ public:
 			prevLayout.get_content_height());
 		prevDotElement.set_content_size(30, 30);
 
-		prevTextElement.set_sprite_mode(LAYOUT::DRAW::crop, LAYOUT::DRAW::crop);
-		prevTextElement.set_sprite_alignment_y(LAYOUT::ALIGNMENT::center);
-		prevTextElement.align(LAYOUT::ALIGNMENT::left,
-			LAYOUT::ALIGNMENT::keep);
+		prevTextElement.set_sprite_mode(LAYOUT::crop, LAYOUT::crop);
+		prevTextElement.set_sprite_alignment_y(LAYOUT::center);
+		prevTextElement.align(LAYOUT::left, LAYOUT::keep);
 		prevTextElement.set_slot_position(prevLayout.get_content_position_x()
 			+ prevLayout.get_content_width() / 4,
 			prevLayout.get_content_position_y());
@@ -163,10 +157,9 @@ public:
 			nextLayout.get_content_height());
 		nextDotElement.set_content_size(30, 30);
 
-		nextTextElement.set_sprite_mode(LAYOUT::DRAW::crop, LAYOUT::DRAW::crop);
-		nextTextElement.set_sprite_alignment_y(LAYOUT::ALIGNMENT::center);
-		nextTextElement.align(LAYOUT::ALIGNMENT::left,
-			LAYOUT::ALIGNMENT::keep);
+		nextTextElement.set_sprite_mode(LAYOUT::crop, LAYOUT::crop);
+		nextTextElement.set_sprite_alignment_y(LAYOUT::center);
+		nextTextElement.align(LAYOUT::left, LAYOUT::keep);
 		nextTextElement.set_slot_position(nextLayout.get_content_position_x()
 			+ nextLayout.get_content_width() / 4,
 			nextLayout.get_content_position_y());
@@ -179,13 +172,10 @@ public:
 		quitElement.set_content_size(40, 40);
 
 		eyeElement.set_content_size(350, 350);
-		eyeElement.set_alignment(LAYOUT::ALIGNMENT::center,
-			LAYOUT::ALIGNMENT::center);
+		eyeElement.set_alignment(LAYOUT::center, LAYOUT::center);
 		eyeElement.set_background(backgroundSprite);
-		eyeElement.set_background_alignment(LAYOUT::ALIGNMENT::center,
-			LAYOUT::ALIGNMENT::center);
-		eyeElement.set_background_mode(LAYOUT::DRAW::repeat,
-			LAYOUT::DRAW::repeat);
+		eyeElement.set_background_alignment(LAYOUT::center, LAYOUT::center);
+		eyeElement.set_background_mode(LAYOUT::repeat, LAYOUT::repeat);
 		eyeElement.set_content(eyeSprites[0]);
 
 		outerLayout.r_align();
@@ -330,7 +320,7 @@ static, or to use global wrappers, plus a global pointer to a class instance.
 - We can also use them for casting the required arguments to their original
 type (from void*) before passing them on to the appropropriate class method.
 - It's a good practice to make sure that the arguments with the names we want
-exist in the map, but that can be omitted if we are certain that they are.
+exist in the map, but that can be omitted if we are certain that they do.
 */
 
 layoutExample *example_gp;

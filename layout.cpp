@@ -9,7 +9,7 @@
 |------------------------------------------------------------------------------|
 | AUTHOR: Sergi Salvador Lozano.                                               |
 | FIRST CREATED: 2014/06/01.                                                   |
-| LAST UPDATED: 2014/08/07.                                                    |
+| LAST UPDATED: 2014/08/10.                                                    |
 |------------------------------------------------------------------------------|
 */
 
@@ -27,8 +27,8 @@ int baseElement::idGenerator = 0;
 
 baseElement::baseElement(std::string name, float contentPosX, float contentPosY,
 	float contentWidth, float contentHeight, float slotPosX, float slotPosY,
-	float slotWidth, float slotHeight, int alignmentX, int alignmentY,
-	int depth, bool visible, bool contentVisible,
+	float slotWidth, float slotHeight, ALIGNMENT alignmentX,
+	ALIGNMENT alignmentY, int depth, bool visible, bool contentVisible,
 	std::map<std::string, event*> &events)
 {
 	if (contentWidth < 0)
@@ -39,12 +39,12 @@ baseElement::baseElement(std::string name, float contentPosX, float contentPosY,
 		slotWidth = 0;
 	if (slotHeight < 0)
 		slotHeight = 0;
-	if (alignmentX != ALIGNMENT::none && alignmentX != ALIGNMENT::left &&
-		alignmentX != ALIGNMENT::right && alignmentX != ALIGNMENT::center)
-		alignmentX = ALIGNMENT::none;
-	if (alignmentY != ALIGNMENT::none && alignmentY != ALIGNMENT::top &&
-		alignmentY != ALIGNMENT::bottom && alignmentY != ALIGNMENT::center)
-		alignmentY = ALIGNMENT::none;
+	if (alignmentX != none && alignmentX != left && alignmentX != right &&
+		alignmentX != center)
+		alignmentX = none;
+	if (alignmentY != none && alignmentY != top && alignmentY != bottom &&
+		alignmentY != center)
+		alignmentY = none;
 
 	id = idGenerator ++;
 	this->name = name;
@@ -146,13 +146,13 @@ float baseElement::get_slot_height()
 }
 
 
-int baseElement::get_alignment_x()
+ALIGNMENT baseElement::get_alignment_x()
 {
 	return alignmentX;
 }
 
 
-int baseElement::get_alignment_y()
+ALIGNMENT baseElement::get_alignment_y()
 {
 	return alignmentY;
 }
@@ -259,29 +259,29 @@ void baseElement::r_match_slot_to_content()
 }
 
 
-void baseElement::set_alignment_x(int alignmentX)
+void baseElement::set_alignment_x(ALIGNMENT alignmentX)
 {
-	if (alignmentX == ALIGNMENT::none || alignmentX == ALIGNMENT::left ||
-		alignmentX == ALIGNMENT::right || alignmentX == ALIGNMENT::center)
+	if (alignmentX == none || alignmentX == left || alignmentX == right ||
+		alignmentX == center)
 		this->alignmentX = alignmentX;
 }
 
 
-void baseElement::set_alignment_y(int alignmentY)
+void baseElement::set_alignment_y(ALIGNMENT alignmentY)
 {
-	if (alignmentY == ALIGNMENT::none || alignmentY == ALIGNMENT::top ||
-		alignmentY == ALIGNMENT::bottom || alignmentY == ALIGNMENT::center)
+	if (alignmentY == none || alignmentY == top || alignmentY == bottom ||
+		alignmentY == center)
 		this->alignmentY = alignmentY;
 }
 
 
-void baseElement::set_alignment(int alignmentX, int alignmentY)
+void baseElement::set_alignment(ALIGNMENT alignmentX, ALIGNMENT alignmentY)
 {
-	if (alignmentX == ALIGNMENT::none || alignmentX == ALIGNMENT::left ||
-		alignmentX == ALIGNMENT::right || alignmentX == ALIGNMENT::center)
+	if (alignmentX == none || alignmentX == left || alignmentX == right ||
+		alignmentX == center)
 		this->alignmentX = alignmentX;
-	if (alignmentY == ALIGNMENT::none || alignmentY == ALIGNMENT::top ||
-		alignmentY == ALIGNMENT::bottom || alignmentY == ALIGNMENT::center)
+	if (alignmentY == none || alignmentY == top || alignmentY == bottom ||
+		alignmentY == center)
 		this->alignmentY = alignmentY;
 }
 
@@ -291,18 +291,18 @@ void baseElement::align()
 	float newContentPosX = contentPosX;
 	float newContentPosY = contentPosY;
 
-	if (alignmentX == ALIGNMENT::left)
+	if (alignmentX == left)
 		newContentPosX = slotPosX;
-	else if (alignmentX == ALIGNMENT::right)
+	else if (alignmentX == right)
 		newContentPosX = slotPosX + slotWidth - contentWidth;
-	else if (alignmentX == ALIGNMENT::center)
+	else if (alignmentX == center)
 		newContentPosX = slotPosX + (slotWidth - contentWidth) / 2;
 
-	if (alignmentY == ALIGNMENT::top)
+	if (alignmentY == top)
 		newContentPosY = slotPosY;
-	else if (alignmentY == ALIGNMENT::bottom)
+	else if (alignmentY == bottom)
 		newContentPosY = slotPosY + slotHeight - contentHeight;
-	else if (alignmentY == ALIGNMENT::center)
+	else if (alignmentY == center)
 		newContentPosY = slotPosY + (slotHeight - contentHeight) / 2;
 
 	set_content_position(newContentPosX, newContentPosY);
@@ -315,14 +315,14 @@ void baseElement::r_align()
 }
 
 
-void baseElement::align(int alignmentX, int alignmentY)
+void baseElement::align(ALIGNMENT alignmentX, ALIGNMENT alignmentY)
 {
 	set_alignment(alignmentX, alignmentY);
 	align();
 }
 
 
-void baseElement::r_align(int alignmentX, int alignmentY)
+void baseElement::r_align(ALIGNMENT alignmentX, ALIGNMENT alignmentY)
 {
 	align(alignmentX, alignmentY);
 }
@@ -659,8 +659,8 @@ void baseFreeLayout::recalculateAllSlotBounds()
 }
 
 
-baseFreeLayout::baseFreeLayout(int size, int defaultAlignmentX,
-	int defaultAlignmentY, bool elastic)
+baseFreeLayout::baseFreeLayout(int size, ALIGNMENT defaultAlignmentX,
+	ALIGNMENT defaultAlignmentY, bool elastic)
 {
 	if (size < 0)
 		size = 0;
@@ -702,13 +702,13 @@ int baseFreeLayout::get_highest_full_slot()
 }
 
 
-int baseFreeLayout::get_default_alignment_x()
+ALIGNMENT baseFreeLayout::get_default_alignment_x()
 {
 	return defaultAlignmentX;
 }
 
 
-int baseFreeLayout::get_default_alignment_y()
+ALIGNMENT baseFreeLayout::get_default_alignment_y()
 {
 	return defaultAlignmentY;
 }
@@ -776,42 +776,34 @@ void baseFreeLayout::r_match_slot_to_content()
 }
 
 
-void baseFreeLayout::set_default_alignment_x(int defaultAlignmentX)
+void baseFreeLayout::set_default_alignment_x(ALIGNMENT defaultAlignmentX)
 {
-	if (defaultAlignmentX == ALIGNMENT::none ||
-		defaultAlignmentX == ALIGNMENT::left ||
-		defaultAlignmentX == ALIGNMENT::right ||
-		defaultAlignmentX == ALIGNMENT::center ||
-		defaultAlignmentX == ALIGNMENT::keep)
+	if (defaultAlignmentX == none || defaultAlignmentX == left ||
+		defaultAlignmentX == right || defaultAlignmentX == center ||
+		defaultAlignmentX == keep)
 		this->defaultAlignmentX = defaultAlignmentX;
 }
 
 
-void baseFreeLayout::set_default_alignment_y(int defaultAlignmentY)
+void baseFreeLayout::set_default_alignment_y(ALIGNMENT defaultAlignmentY)
 {
-	if (defaultAlignmentY == ALIGNMENT::none ||
-		defaultAlignmentY == ALIGNMENT::top ||
-		defaultAlignmentY == ALIGNMENT::bottom ||
-		defaultAlignmentY == ALIGNMENT::center ||
-		defaultAlignmentY == ALIGNMENT::keep)
+	if (defaultAlignmentY == none || defaultAlignmentY == top ||
+		defaultAlignmentY == bottom || defaultAlignmentY == center ||
+		defaultAlignmentY == keep)
 		this->defaultAlignmentY = defaultAlignmentY;
 }
 
 
-void baseFreeLayout::set_default_alignment(int defaultAlignmentX,
-	int defaultAlignmentY)
+void baseFreeLayout::set_default_alignment(ALIGNMENT defaultAlignmentX,
+	ALIGNMENT defaultAlignmentY)
 {
-	if (defaultAlignmentX == ALIGNMENT::none ||
-		defaultAlignmentX == ALIGNMENT::left ||
-		defaultAlignmentX == ALIGNMENT::right ||
-		defaultAlignmentX == ALIGNMENT::center ||
-		defaultAlignmentX == ALIGNMENT::keep)
+	if (defaultAlignmentX == none || defaultAlignmentX == left ||
+		defaultAlignmentX == right || defaultAlignmentX == center ||
+		defaultAlignmentX == keep)
 		this->defaultAlignmentX = defaultAlignmentX;
-	if (defaultAlignmentY == ALIGNMENT::none ||
-		defaultAlignmentY == ALIGNMENT::top ||
-		defaultAlignmentY == ALIGNMENT::bottom ||
-		defaultAlignmentY == ALIGNMENT::center ||
-		defaultAlignmentY == ALIGNMENT::keep)
+	if (defaultAlignmentY == none || defaultAlignmentY == top ||
+		defaultAlignmentY == bottom || defaultAlignmentY == center ||
+		defaultAlignmentY == keep)
 		this->defaultAlignmentY = defaultAlignmentY;
 }
 
@@ -825,7 +817,7 @@ void baseFreeLayout::r_align()
 }
 
 
-void baseFreeLayout::r_align(int alignmentX, int alignmentY)
+void baseFreeLayout::r_align(ALIGNMENT alignmentX, ALIGNMENT alignmentY)
 {
 	align(alignmentX, alignmentY);
 	for (int i = 0 ; i < elements.size() ; i ++)
@@ -919,7 +911,7 @@ void baseFreeLayout::add_element(baseElement &element, int slotNumber)
 	if (slotNumber >= 0 && !element.parentLayout &&
 		(elastic || slotNumber < elements.size()))
 	{
-		// The size of an elastic layout's is expanded if necessary.
+		// The size of an elastic layout is expanded if necessary.
 		if (slotNumber >= elements.size())
 		{
 			elements.resize(slotNumber + 1, 0);
@@ -927,7 +919,7 @@ void baseFreeLayout::add_element(baseElement &element, int slotNumber)
 		}
 
 		// The new element's slot and alignment are recalculated.
-		// 'ALIGNMENT::keep' will leave the alignment in an axis unchanged.
+		// 'keep' will leave the alignment in an axis unchanged.
 		recalculateSlotBounds(element);
 		element.set_alignment(defaultAlignmentX, defaultAlignmentY);
 		if (baseFreeLayout *layout = dynamic_cast<baseFreeLayout*>(&element))
