@@ -35,5 +35,12 @@ This folder contains a series of image files used as textures by 'example.cpp'.
 
 ----------
 
-If you have any problem, encouter an error, or want to contact me about this library, you can do so at
+* changelog.txt
+
+A summary of all changes in the code intruduced by new releases (from v1.0 to current).
+
+----------
+
+
+If you have any problem, encouter a bug, or want to contact me about this library for any reason, you can do so at
 sergi@protonmail.ch
