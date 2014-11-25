@@ -42,5 +42,5 @@ A summary of all changes in the code intruduced by new releases (from v1.0 to cu
 ----------
 
 
-If you have any problem, encouter a bug, or want to contact me about this library for any reason, you can do so at
+If you have any problem, encounter a bug, or want to contact me about this library for any reason, you can do so at
 sergi@protonmail.ch
